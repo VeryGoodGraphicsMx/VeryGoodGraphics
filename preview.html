@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yes! Graphics | Estudio Creativo</title>
+
+  <style>
+    :root {
+      --black: #05060d;
+      --dark: #090b16;
+      --card: rgba(255,255,255,.055);
+      --line: rgba(255,255,255,.12);
+      --white: #ffffff;
+      --muted: #c8c8d4;
+      --yellow: #fff200;
+      --purple: #8b20ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--black);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at 70% 12%, rgba(139,32,255,.45), transparent 28%),
+        radial-gradient(circle at 10% 90%, rgba(139,32,255,.38), transparent 25%),
+        radial-gradient(circle at 85% 75%, rgba(255,242,0,.10), transparent 18%),
+        linear-gradient(180deg, #05060d 0%, #090b16 45%, #05060d 100%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      opacity: .18;
+      background-image:
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, transparent, black 15%, black 80%, transparent);
+    }
+
+    .bg-wave {
+      position: fixed;
+      left: -10%;
+      right: -10%;
+      bottom: -140px;
+      height: 320px;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse at center, rgba(139,32,255,.55), transparent 65%);
+      filter: blur(20px);
+      opacity: .75;
+    }
+
+    .container {
+      width: min(1180px, 90%);
+      margin: auto;
+    }
+
+    header {
+      padding: 28px 0;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(5,6,13,.65);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      width: 82px;
+    }
+
+    nav {
+      display: flex;
+      gap: 36px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .btn-outline {
+      border: 2px solid var(--yellow);
+      color: var(--yellow);
+      padding: 14px 28px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .hero {
+      min-height: 720px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 50px;
+      position: relative;
+      padding: 70px 0 90px;
+    }
+
+    .eyebrow {
+      color: var(--purple);
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(48px, 6vw, 82px);
+      line-height: .95;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+    }
+
+    h1 span, h2 span {
+      color: var(--yellow);
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 28px 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--yellow);
+      color: #050505;
+      border: 0;
+      padding: 17px 30px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: white;
+      border: 1px solid rgba(255,255,255,.45);
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 520px;
+    }
+
+    .yellow-orb {
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: var(--yellow);
+      right: 5%;
+      top: 8%;
+      box-shadow: 0 0 80px rgba(255,242,0,.35);
+    }
+
+    .hero-img {
+      position: absolute;
+      max-width: 680px;
+      width: 110%;
+      right: -8%;
+      top: 0;
+      filter: drop-shadow(0 30px 60px rgba(0,0,0,.55));
+    }
+
+    section {
+      padding: 80px 0;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 36px;
+    }
+
+    h2 {
+      font-size: clamp(34px, 4vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -1px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 17px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 26px;
+      min-height: 210px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.22);
+    }
+
+    .icon {
+      font-size: 34px;
+      color: var(--yellow);
+      margin-bottom: 20px;
+    }
+
+    .card h3 {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .works {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .work {
+      height: 210px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #111;
+      border: 1px solid var(--line);
+    }
+
+    .work img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .process-contact {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 50px;
+      align-items: start;
+    }
+
+    .steps {
+      margin-top: 28px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .number {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--purple);
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      box-shadow: 0 0 25px rgba(139,32,255,.45);
+    }
+
+    .form-box {
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 34px;
+    }
+
+    .form-box h3 {
+      color: var(--purple);
+      font-size: 26px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin: 18px 0 8px;
+    }
+
+    select, input, textarea {
+      width: 100%;
+      background: rgba(0,0,0,.35);
+      color: white;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .cta {
+      margin: 70px auto 30px;
+      background: linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 120px 1fr 1fr;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .cta img {
+      width: 90px;
+    }
+
+    footer {
+      padding: 60px 0 30px;
+      color: var(--muted);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    footer a {
+      color: var(--muted);
+      display: block;
+      margin: 10px 0;
+      text-decoration: none;
+    }
+
+    .copy {
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding-top: 24px;
+      font-size: 13px;
+    }
+
+    @media(max-width: 900px) {
+      nav {
+        display: none;
+      }
+
+      .hero,
+      .section-head,
+      .process-contact,
+      .cta,
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding-top: 40px;
+      }
+
+      .hero-visual {
+        min-height: 380px;
+      }
+
+      .yellow-orb {
+        width: 280px;
+        height: 280px;
+      }
+
+      .grid,
+      .works {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media(max-width: 560px) {
+      .grid,
+      .works {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-outline {
+        display: none;
+      }
+
+      .hero-img {
+        width: 130%;
+        right: -22%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="bg-wave"></div>
+
+  <header>
+    <div class="container nav">
+      <img src="media/logo.png" class="logo" alt="Yes Graphics Logo" />
+
+      <nav>
+        <a href="#servicios">Servicios</a>
+        <a href="#trabajos">Trabajos</a>
+        <a href="#proceso">Proceso</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+
+      <a href="#contacto" class="btn-outline">Cotiza tu proyecto →</a>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="container hero">
+      <div>
+        <div class="eyebrow">Estudio creativo</div>
+        <h1>Diseño que comunica. Estrategia que <span>vende.</span></h1>
+        <p>
+          Somos un estudio creativo aliado en tu marca, desde la idea y el diseño
+          hasta las piezas estratégicas que elevan marcas y generan resultados.
+        </p>
+
+        <div class="actions">
+          <a href="#contacto" class="btn">Cotiza tu proyecto →</a>
+          <a href="#trabajos" class="btn btn-secondary">Ver trabajos</a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="yellow-orb"></div>
+        <img src="media/hero.png" class="hero-img" alt="Producción creativa" />
+      </div>
+    </section>
+
+    <section id="servicios">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Servicios</div>
+            <h2>Soluciones creativas para <span>marcas ambiciosas.</span></h2>
+          </div>
+          <p>
+            Combinamos estrategia, diseño y producción para crear piezas que conectan
+            con tu audiencia y elevan el impacto de tu marca.
+          </p>
+        </div>
+
+        <div class="grid">
+          <div class="card"><div class="icon">◇</div><h3>Branding Corporativo</h3><p>Construimos marcas sólidas y memorables.</p></div>
+          <div class="card"><div class="icon">✦</div><h3>Diseño Gráfico</h3><p>Piezas visuales que comunican con claridad.</p></div>
+          <div class="card"><div class="icon">◎</div><h3>Web & Landing Pages</h3><p>Sitios modernos enfocados en conversión.</p></div>
+          <div class="card"><div class="icon">▣</div><h3>Fotografía</h3><p>Producto, corporativo y lifestyle.</p></div>
+          <div class="card"><div class="icon">▶</div><h3>Video & Edición</h3><p>Contenido que cuenta tu historia.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="trabajos">
+      <div class="container">
+        <div class="eyebrow">Trabajos</div>
+        <h2>Algunos proyectos que cuentan <span>historias.</span></h2>
+
+        <div class="works">
+          <div class="work"><img src="media/work-1.jpg" alt=""></div>
+          <div class="work"><img src="media/work-2.jpg" alt=""></div>
+          <div class="work"><img src="media/work-3.jpg" alt=""></div>
+          <div class="work"><img src="media/work-4.jpg" alt=""></div>
+          <div class="work"><img src="media/work-5.jpg" alt=""></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="proceso">
+      <div class="container process-contact">
+        <div>
+          <div class="eyebrow">Proceso</div>
+          <h2>Simple, claro y <span>efectivo.</span></h2>
+
+          <div class="steps">
+            <div class="step"><div class="number">01</div><div><h3>Descubrimos</h3><p>Tu marca, retos, objetivos y audiencia.</p></div></div>
+            <div class="step"><div class="number">02</div><div><h3>Estrategia</h3><p>Definimos el plan y solución a medida.</p></div></div>
+            <div class="step"><div class="number">03</div><div><h3>Creamos</h3><p>Diseñamos, producimos y desarrollamos.</p></div></div>
+            <div class="step"><div class="number">04</div><div><h3>Entregamos</h3><p>Resultado que conecta y genera impacto.</p></div></div>
+          </div>
+        </div>
+
+        <div id="contacto" class="form-box">
+          <h3>Cotiza tu proyecto</h3>
+          <p>Cuéntanos de tu proyecto y recibe una propuesta personalizada.</p>
+
+          <form>
+            <label>Tipo de proyecto</label>
+            <select>
+              <option>Selecciona</option>
+              <option>Branding</option>
+              <option>Landing Page</option>
+              <option>Fotografía</option>
+              <option>Video</option>
+            </select>
+
+            <label>Nombre</label>
+            <input type="text" placeholder="Tu nombre" />
+
+            <label>Correo</label>
+            <input type="email" placeholder="correo@empresa.com" />
+
+            <label>Mensaje</label>
+            <textarea rows="4" placeholder="Cuéntanos qué necesitas"></textarea>
+
+            <br><br>
+            <button class="btn" type="submit">Solicitar cotización →</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="container cta">
+        <img src="media/logo.png" alt="">
+        <h2>¿Listo para llevar tu marca al <span>siguiente nivel?</span></h2>
+        <div>
+          <p>Hablemos de tu proyecto y creemos algo increíble juntos.</p>
+          <br>
+          <a href="https://wa.me/525512345678" class="btn">Escríbenos por WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <img src="media/logo.png" class="logo" alt="">
+        <p>Diseño que comunica, estrategia que vende y creatividad que genera resultados.</p>
+      </div>
+
+      <div>
+        <strong>Navegación</strong>
+        <a href="#servicios">Servicios</a>
+        <a href="#trabajos">Trabajos</a>
+        <a href="#proceso">Proceso</a>
+      </div>
+
+      <div>
+        <strong>Servicios</strong>
+        <a>Branding</a>
+        <a>Diseño Gráfico</a>
+        <a>Diseño Web</a>
+        <a>Fotografía</a>
+      </div>
+
+      <div>
+        <strong>Contacto</strong>
+        <a>hola@yesgfx.com</a>
+        <a>+52 55 1234 5678</a>
+        <a>Ciudad de México</a>
+      </div>
+    </div>
+
+    <div class="container copy">
+      © 2026 Yes! Graphics. Todos los derechos reservados.
+    </div>
+  </footer>
+
+</body>
+</html>
