@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cotizador | Very Good Graphics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --lime:        #E8FF00;
+      --lime-dim:    rgba(232,255,0,.12);
+      --lime-glow:   rgba(232,255,0,.35);
+      --purple:      #7B2CFF;
+      --purple-dim:  rgba(123,44,255,.18);
+      --black:       #080A10;
+      --card:        #111520;
+      --card2:       #0D1018;
+      --border:      rgba(255,255,255,.09);
+      --white:       #F7F7F2;
+      --muted:       #8B8FA8;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* BG */
+    .bg {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(ellipse 55% 45% at 85% 0%,  rgba(123,44,255,.5) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 35% at 5%  95%, rgba(123,44,255,.35) 0%, transparent 55%),
+        radial-gradient(ellipse 30% 25% at 92% 88%, rgba(232,255,0,.08) 0%, transparent 50%),
+        linear-gradient(175deg, #07071a 0%, #080a10 55%, #0a0a12 100%);
+    }
+    .bg::after {
+      content: "";
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 6%, black 90%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 6%, black 90%, transparent 100%);
+    }
+
+    /* LAYOUT */
+    .wrap { width: min(1000px, 92%); margin: 0 auto; }
+
+    /* HEADER */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,10,16,.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(232,255,0,.12);
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 13px;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: var(--white); text-decoration: none;
+    }
+    .logo em { color: var(--lime); font-style: normal; }
+    .header-badge {
+      background: var(--lime-dim);
+      border: 1px solid rgba(232,255,0,.25);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--lime);
+    }
+
+    /* PROGRESS */
+    .progress-bar-wrap {
+      background: rgba(255,255,255,.05);
+      height: 3px;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--lime);
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 0 12px var(--lime-glow);
+    }
+
+    /* MAIN */
+    main { padding: 48px 0 80px; }
+
+    /* STEP INDICATOR */
+    .step-indicator {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 40px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 12px;
+      color: var(--muted);
+      transition: all .3s;
+      flex-shrink: 0;
+    }
+    .step-num.active {
+      border-color: var(--lime);
+      color: var(--lime);
+      box-shadow: 0 0 16px var(--lime-glow);
+    }
+    .step-num.done {
+      background: var(--lime);
+      border-color: var(--lime);
+      color: var(--black);
+    }
+    .step-label {
+      font-size: 12px; font-weight: 600;
+      color: var(--muted);
+      transition: color .3s;
+      white-space: nowrap;
+    }
+    .step-label.active { color: var(--white); }
+    .step-connector {
+      width: 32px; height: 1px;
+      background: rgba(255,255,255,.1);
+      margin: 0 6px;
+      flex-shrink: 0;
+    }
+
+    /* PANEL */
+    .panel { display: none; animation: fadeUp .4s ease forwards; }
+    .panel.visible { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header { margin-bottom: 32px; }
+    .eyebrow {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 2.5px;
+      color: var(--purple);
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .eyebrow::before { content: ""; width: 14px; height: 2px; background: var(--purple); border-radius: 2px; }
+    .panel-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: clamp(26px, 4vw, 40px);
+      text-transform: uppercase; line-height: .96; letter-spacing: -.5px;
+    }
+    .panel-title em { color: var(--lime); font-style: normal; }
+    .panel-desc { color: var(--muted); font-size: 15px; line-height: 1.6; margin-top: 10px; }
+
+    /* GRID LAYOUT */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* FIELDS */
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--muted);
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      background: rgba(255,255,255,.055);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 15px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px; color: var(--white);
+      outline: none;
+      transition: border-color .2s, background .2s;
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--purple);
+      background: rgba(123,44,255,.06);
+    }
+    .field input::placeholder,
+    .field textarea::placeholder { color: rgba(139,143,168,.5); }
+    .field select option { background: #1a1a2e; color: var(--white); }
+    .field textarea { resize: vertical; min-height: 88px; line-height: 1.6; }
+
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: "▾"; position: absolute;
+      right: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); pointer-events: none; font-size: 13px;
+    }
+
+    .field-group { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+
+    /* SERVICES GRID */
+    .svc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .svc-card {
+      background: rgba(255,255,255,.045);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex; align-items: flex-start; gap: 12px;
+      transition: border-color .2s, background .2s, transform .15s;
+      user-select: none;
+    }
+    .svc-card:hover { border-color: rgba(123,44,255,.4); transform: translateY(-2px); }
+    .svc-card.active {
+      border-color: var(--lime);
+      background: rgba(232,255,0,.07);
+    }
+    .svc-check {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      border: 1.5px solid rgba(255,255,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+      font-size: 12px; font-weight: 900;
+      transition: all .2s;
+      color: transparent;
+    }
+    .svc-card.active .svc-check {
+      background: var(--lime);
+      border-color: var(--lime);
+      color: var(--black);
+    }
+    .svc-info h4 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px; font-weight: 800;
+      margin-bottom: 3px; line-height: 1.3;
+    }
+    .svc-info p { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+    .svc-price-row {
+      display: none;
+      margin-top: 6px;
+    }
+    .svc-price-row.show { display: block; }
+    .svc-price-input {
+      width: 100%;
+      background: rgba(0,0,0,.3);
+      border: 1px solid rgba(232,255,0,.2);
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; color: var(--white);
+      outline: none;
+    }
+    .svc-price-input:focus { border-color: var(--lime); }
+    .svc-price-input::placeholder { color: rgba(139,143,168,.4); }
+
+    /* PACKAGES */
+    .pkg-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 24px;
+    }
+    .pkg-card {
+      background: rgba(255,255,255,.04);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 18px;
+      cursor: pointer;
+      position: relative;
+      transition: border-color .25s, background .25s, transform .15s;
+      text-align: center;
+    }
+    .pkg-card:hover { transform: translateY(-3px); border-color: rgba(123,44,255,.4); }
+    .pkg-card.active {
+      border-color: var(--purple);
+      background: rgba(123,44,255,.1);
+    }
+    .pkg-card.rec { border-color: rgba(232,255,0,.3); }
+    .pkg-card.rec.active { border-color: var(--lime); background: rgba(232,255,0,.07); }
+    .pkg-badge {
+      position: absolute; top: -10px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--lime); color: var(--black);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 9px;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 3px 10px; border-radius: 20px;
+      white-space: nowrap;
+    }
+    .pkg-name {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 14px;
+      text-transform: uppercase; letter-spacing: .3px;
+      margin-bottom: 10px;
+    }
+    .pkg-price {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 28px;
+      color: var(--lime); line-height: 1;
+    }
+    .pkg-price sup { font-size: 14px; vertical-align: super; }
+    .pkg-mensual { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .pkg-desc { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+    .pkg-custom-fields {
+      margin-top: 20px;
+      display: none;
+    }
+    .pkg-custom-fields.show { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* DETAILS PANEL */
+    .detail-cols {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-top: 20px;
+    }
+
+    /* SUMMARY */
+    .summary-box {
+      background: var(--card2);
+      border: 1px solid rgba(232,255,0,.15);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .sum-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 13px;
+    }
+    .sum-row:last-of-type { border-bottom: none; }
+    .sum-key { color: var(--muted); }
+    .sum-val { font-weight: 600; color: var(--white); text-align: right; max-width: 60%; }
+    .sum-total {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-top: 16px; padding-top: 14px;
+      border-top: 2px solid rgba(232,255,0,.3);
+    }
+    .sum-total-label {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 13px;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .sum-total-val {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 32px;
+      color: var(--lime);
+    }
+    .tag {
+      display: inline-block;
+      background: rgba(123,44,255,.2);
+      border: 1px solid rgba(123,44,255,.35);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: 11px; color: #b08aff;
+      margin: 2px 2px 2px 0;
+    }
+
+    /* OUTPUT */
+    .output-area {
+      background: rgba(0,0,0,.5);
+      border: 1px solid rgba(232,255,0,.15);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      color: rgba(232,255,0,.7);
+      line-height: 1.5;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-bottom: 16px;
+    }
+
+    .notice {
+      background: rgba(232,255,0,.06);
+      border: 1px solid rgba(232,255,0,.18);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px; color: #c8d080;
+      line-height: 1.6;
+      margin-bottom: 18px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .notice-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* BUTTONS */
+    .btn-row {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-top: 28px; padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .btn-back {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 10px;
+      padding: 12px 20px;
+      color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-back:hover { border-color: rgba(255,255,255,.4); color: var(--white); }
+
+    .btn-next {
+      background: var(--lime);
+      border: none; border-radius: 10px;
+      padding: 13px 26px;
+      color: var(--black);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 13px;
+      text-transform: uppercase; letter-spacing: .4px;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-next:hover { opacity: .88; transform: translateY(-1px); }
+
+    .btn-purple {
+      background: var(--purple);
+      border: none; border-radius: 10px;
+      padding: 13px 22px;
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 13px;
+      text-transform: uppercase; letter-spacing: .4px;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-purple:hover { opacity: .85; }
+
+    .btn-download {
+      background: var(--lime);
+      border: none; border-radius: 10px;
+      padding: 13px 24px;
+      color: var(--black);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900; font-size: 13px;
+      text-transform: uppercase; letter-spacing: .4px;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: opacity .2s;
+      text-decoration: none;
+    }
+    .btn-download:hover { opacity: .88; }
+
+    /* RESPONSIVE */
+    @media (max-width: 680px) {
+      .grid-2, .grid-3, .pkg-grid, .detail-cols, .pkg-custom-fields.show {
+        grid-template-columns: 1fr;
+      }
+      .step-label { display: none; }
+      .step-connector { width: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg"></div>
+
+<header>
+  <div class="wrap header-inner">
+    <a href="https://verygoodgraphics.mx" class="logo">Very <em>Good</em> Graphics</a>
+    <span class="header-badge">Cotizador de Propuestas</span>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressFill" style="width:20%"></div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- STEP INDICATOR -->
+    <div class="step-indicator">
+      <div class="step-item">
+        <div class="step-num active" id="snum0">1</div>
+        <div class="step-label active" id="slabel0">Cliente</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-num" id="snum1">2</div>
+        <div class="step-label" id="slabel1">Servicios</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-num" id="snum2">3</div>
+        <div class="step-label" id="slabel2">Paquete</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-num" id="snum3">4</div>
+        <div class="step-label" id="slabel3">Detalles</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-num" id="snum4">5</div>
+        <div class="step-label" id="slabel4">Propuesta</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 0 — CLIENTE
+    ══════════════════════════════════════════ -->
+    <div class="panel visible" id="panel0">
+      <div class="panel-header">
+        <div class="eyebrow">Paso 1 de 5</div>
+        <h1 class="panel-title">Datos del <em>Cliente</em></h1>
+        <p class="panel-desc">¿Para quién es esta propuesta? Ingresa los datos básicos del prospecto.</p>
+      </div>
+
+      <div class="field-group">
+        <div class="grid-2">
+          <div class="field">
+            <label class="field-label">Nombre del cliente</label>
+            <input type="text" id="f_nombre" placeholder="Ej. Josué Ramírez">
+          </div>
+          <div class="field">
+            <label class="field-label">Empresa / Marca / Startup</label>
+            <input type="text" id="f_empresa" placeholder="Ej. Eval360">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="field-label">Industria</label>
+            <div class="select-wrap">
+              <select id="f_industria">
+                <option value="">Selecciona</option>
+                <option>SaaS / Tecnología</option>
+                <option>Recursos Humanos</option>
+                <option>Retail / Ecommerce</option>
+                <option>Servicios Profesionales</option>
+                <option>Educación</option>
+                <option>Salud y Bienestar</option>
+                <option>Construcción / Inmobiliaria</option>
+                <option>Alimentos y Bebidas</option>
+                <option>Moda / Textil</option>
+                <option>Entretenimiento / Medios</option>
+                <option>Finanzas</option>
+                <option>Manufactura</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Etapa del negocio</label>
+            <div class="select-wrap">
+              <select id="f_etapa">
+                <option value="">Selecciona</option>
+                <option>Idea / Pre-lanzamiento</option>
+                <option>Startup en arranque</option>
+                <option>En operación (1–3 años)</option>
+                <option>Empresa establecida (+3 años)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Problema o necesidad principal detectada</label>
+          <textarea id="f_problema" placeholder="Ej. Acaban de lanzar su plataforma SaaS pero no tienen presencia digital estructurada. La landing no está optimizada para conversión y no cuentan con una estrategia de adquisición de clientes..."></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="field-label">Correo del cliente</label>
+            <input type="email" id="f_email" placeholder="josue@eval360.com">
+          </div>
+          <div class="field">
+            <label class="field-label">WhatsApp / Teléfono</label>
+            <input type="text" id="f_tel" placeholder="55 1234 5678">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:flex-end">
+        <button class="btn-next" onclick="goTo(1)">Siguiente: Servicios →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 1 — SERVICIOS
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="panel1">
+      <div class="panel-header">
+        <div class="eyebrow">Paso 2 de 5</div>
+        <h1 class="panel-title">Servicios <em>a incluir</em></h1>
+        <p class="panel-desc">Selecciona los servicios de VGG que aplican a este proyecto. Puedes agregar precio individual si quieres desglosarlo.</p>
+      </div>
+
+      <div class="svc-grid" id="svcGrid">
+
+        <div class="svc-card" data-svc="Estrategia y Diagnóstico de Marca" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Estrategia & Diagnóstico</h4>
+            <p>Buyer persona, propuesta de valor, mensajes clave y diferenciadores comerciales</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Branding Corporativo" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Branding Corporativo</h4>
+            <p>Logotipo, identidad visual, paleta, tipografía y manual de marca</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Diseño Gráfico" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Diseño Gráfico</h4>
+            <p>Posts, piezas comerciales, materiales impresos y digitales</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Landing Page / Diseño Web" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Landing Page / Diseño Web</h4>
+            <p>Diseño, copy y UX orientados a conversión y captación de leads</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Campañas de Publicidad Digital (Google / Meta)" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Campañas de Publicidad</h4>
+            <p>Google Ads, Meta Ads, segmentación, copies y estructura de campañas</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Contenido para Redes Sociales" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Contenido para Redes</h4>
+            <p>Posts, carruseles, copies, guiones y calendario editorial</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Fotografía Profesional" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Fotografía Profesional</h4>
+            <p>Producto, corporativa y lifestyle que proyecta calidad y confianza</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Video & Edición" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Video & Edición</h4>
+            <p>Demo, brand film, reels, testimoniales y contenido para anuncios</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Fotografía y Video con Dron" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Dron</h4>
+            <p>Tomas aéreas, recorridos y perspectivas únicas para proyectos</p>
+          </div>
+        </div>
+
+        <div class="svc-card" data-svc="Ilustración Digital" onclick="toggleSvc(this)">
+          <div class="svc-check">✓</div>
+          <div class="svc-info">
+            <h4>Ilustración Digital</h4>
+            <p>Personajes, concept art, iconografía y arte con estilo propio</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="btn-row" style="justify-content:space-between">
+        <button class="btn-back" onclick="goTo(0)">← Atrás</button>
+        <button class="btn-next" onclick="goTo(2)">Siguiente: Paquete →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 2 — PAQUETE
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="panel2">
+      <div class="panel-header">
+        <div class="eyebrow">Paso 3 de 5</div>
+        <h1 class="panel-title">Elige el <em>Paquete</em></h1>
+        <p class="panel-desc">Selecciona el modelo de cobro que mejor se adapta al cliente y al proyecto.</p>
+      </div>
+
+      <div class="pkg-grid">
+        <div class="pkg-card" id="pkg-basico" onclick="selectPkg('basico')">
+          <div class="pkg-name">Básico</div>
+          <div class="pkg-price"><sup>$</sup>8,500</div>
+          <div class="pkg-mensual">Pago único · Sin gestión</div>
+          <div class="pkg-desc">Validación de mercado. Entregables esenciales para arrancar sin inversión mensual.</div>
+        </div>
+        <div class="pkg-card rec" id="pkg-lanzamiento" onclick="selectPkg('lanzamiento')">
+          <div class="pkg-badge">★ Recomendado</div>
+          <div class="pkg-name">Lanzamiento</div>
+          <div class="pkg-price"><sup>$</sup>18,000</div>
+          <div class="pkg-mensual">+ $7,500 MXN/mes gestión</div>
+          <div class="pkg-desc">Setup completo + acompañamiento mensual de optimización y resultados.</div>
+        </div>
+        <div class="pkg-card" id="pkg-socio" onclick="selectPkg('socio')">
+          <div class="pkg-name">Socio / Performance</div>
+          <div class="pkg-price"><sup>$</sup>7,500</div>
+          <div class="pkg-mensual">+ comisión por resultado</div>
+          <div class="pkg-desc">Pago inicial reducido + % por lead calificado o venta cerrada.</div>
+        </div>
+      </div>
+
+      <!-- CAMPOS PERSONALIZADOS -->
+      <div class="pkg-custom-fields" id="pkgCustomFields">
+        <div class="field">
+          <label class="field-label">Precio de setup / proyecto (MXN)</label>
+          <input type="number" id="f_setup" placeholder="18000">
+        </div>
+        <div class="field">
+          <label class="field-label">Mensualidad de gestión (MXN, si aplica)</label>
+          <input type="number" id="f_mensual" placeholder="7500">
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label class="field-label">Modelo de comisión (si aplica)</label>
+          <input type="text" id="f_comision" placeholder="Ej. 10%–15% por venta cerrada o $400 MXN por lead calificado">
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div class="field">
+          <label class="field-label">Presupuesto de pauta recomendado (MXN/mes — a cargo del cliente)</label>
+          <input type="text" id="f_pauta" placeholder="Ej. $8,000 – $15,000 MXN para prueba inicial de mercado">
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:space-between">
+        <button class="btn-back" onclick="goTo(1)">← Atrás</button>
+        <button class="btn-next" onclick="goTo(3)">Siguiente: Detalles →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 3 — DETALLES
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="panel3">
+      <div class="panel-header">
+        <div class="eyebrow">Paso 4 de 5</div>
+        <h1 class="panel-title">Detalles de la <em>Propuesta</em></h1>
+        <p class="panel-desc">Completa el diagnóstico, entregables y mensaje de cierre. Esto es lo que verá el cliente.</p>
+      </div>
+
+      <div class="field-group">
+        <div class="field">
+          <label class="field-label">Diagnóstico / Área de oportunidad detectada</label>
+          <textarea id="f_diag" style="min-height:110px" placeholder="Ej. El producto ya tiene una buena base funcional, pero hoy se siente más como landing informativa que como una máquina comercial. Le falta construir confianza: casos de uso por tipo de cliente, diferenciador más fuerte, prueba visual del producto y argumentos de dolor..."></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">¿Qué incluye la propuesta? (una línea por entregable)</label>
+          <textarea id="f_incluye" style="min-height:110px" placeholder="Diagnóstico comercial y definición de buyer persona
+Optimización de copy de landing page
+8 posts para LinkedIn / Facebook
+4 carruseles comerciales
+Estructura de campañas Google Ads y Meta Ads
+6 copies para anuncios
+Mensaje de prospección para WhatsApp / LinkedIn
+Guion para video demo
+Configuración básica de seguimiento de leads"></textarea>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="field-label">Tiempo de entrega estimado</label>
+            <input type="text" id="f_plazo" placeholder="Ej. 2–3 semanas">
+          </div>
+          <div class="field">
+            <label class="field-label">Validez de la propuesta</label>
+            <input type="text" id="f_validez" placeholder="Ej. 15 días naturales">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Mensaje de cierre personalizado</label>
+          <textarea id="f_cierre" placeholder="Ej. Creo que Eval360 tiene un producto con potencial real y que lo más importante en esta etapa no es solo &quot;hacer publicidad&quot;, sino construir el sistema mínimo de adquisición: landing, mensaje, campañas, contenido, medición y seguimiento. Eso es exactamente lo que propongo."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row" style="justify-content:space-between">
+        <button class="btn-back" onclick="goTo(2)">← Atrás</button>
+        <button class="btn-next" onclick="goTo(4)">Generar Propuesta →</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         PANEL 4 — OUTPUT
+    ══════════════════════════════════════════ -->
+    <div class="panel" id="panel4">
+      <div class="panel-header">
+        <div class="eyebrow">Paso 5 de 5</div>
+        <h1 class="panel-title">Tu propuesta <em>está lista</em></h1>
+        <p class="panel-desc">Descarga el archivo HTML y súbelo a Netlify. Comparte el link con tu cliente.</p>
+      </div>
+
+      <div class="summary-box" id="summaryBox"></div>
+
+      <div class="notice">
+        <span class="notice-icon">⚡</span>
+        <span>Descarga el archivo <strong>propuesta-[cliente].html</strong> → súbelo a Netlify Drop → copia la URL → mándala por WhatsApp o correo. El cliente verá su propuesta personalizada en el browser.</span>
+      </div>
+
+      <div class="output-area" id="outputArea">Generando HTML...</div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn-download" id="downloadBtn" href="#" download="propuesta-cliente.html">
+          ⬇ Descargar HTML
+        </a>
+        <button class="btn-purple" onclick="previewProp()">👁 Vista previa</button>
+      </div>
+
+      <div class="btn-row" style="justify-content:space-between">
+        <button class="btn-back" onclick="goTo(3)">← Editar</button>
+        <button class="btn-next" onclick="resetAll()">+ Nueva cotización</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  let currentStep = 0;
+  let selectedSvcs = [];
+  let selectedPkg = null;
+
+  const PKG_PRESETS = {
+    basico:      { nombre: 'Básico',             setup: 8500,  mensual: 0,    comision: '' },
+    lanzamiento: { nombre: 'Lanzamiento',        setup: 18000, mensual: 7500, comision: '' },
+    socio:       { nombre: 'Socio / Performance', setup: 7500,  mensual: 0,    comision: '10%–15% por venta cerrada' },
+  };
+
+  const PROGRESS = ['20%','40%','60%','80%','100%'];
+
+  function goTo(step) {
+    document.getElementById('panel' + currentStep).classList.remove('visible');
+    updateStepUI(currentStep, 'done');
+
+    currentStep = step;
+    document.getElementById('panel' + step).classList.add('visible');
+    updateStepUI(step, 'active');
+    document.getElementById('progressFill').style.width = PROGRESS[step];
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (step === 4) generateAll();
+  }
+
+  function updateStepUI(i, state) {
+    const num   = document.getElementById('snum'   + i);
+    const label = document.getElementById('slabel' + i);
+    num.className   = 'step-num '   + state;
+    label.className = 'step-label ' + (state === 'active' ? 'active' : '');
+    if (state === 'done') num.textContent = '✓';
+    else num.textContent = (i + 1).toString();
+  }
+
+  function toggleSvc(el) {
+    el.classList.toggle('active');
+    const svc = el.dataset.svc;
+    if (el.classList.contains('active')) {
+      if (!selectedSvcs.includes(svc)) selectedSvcs.push(svc);
+    } else {
+      selectedSvcs = selectedSvcs.filter(s => s !== svc);
+    }
+  }
+
+  function selectPkg(pkg) {
+    document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('pkg-' + pkg).classList.add('active');
+    selectedPkg = pkg;
+    const customEl = document.getElementById('pkgCustomFields');
+    customEl.classList.toggle('show', pkg !== null);
+    const p = PKG_PRESETS[pkg] || {};
+    if (p.setup)   document.getElementById('f_setup').value   = p.setup;
+    if (p.mensual) document.getElementById('f_mensual').value = p.mensual;
+    if (p.comision) document.getElementById('f_comision').value = p.comision;
+  }
+
+  function getPkg() {
+    const base = selectedPkg ? PKG_PRESETS[selectedPkg] : { nombre: 'Personalizado', setup: 0, mensual: 0, comision: '' };
+    return {
+      nombre:   base.nombre,
+      setup:    parseInt(document.getElementById('f_setup').value   || base.setup)   || 0,
+      mensual:  parseInt(document.getElementById('f_mensual').value  || base.mensual) || 0,
+      comision: document.getElementById('f_comision').value || base.comision || '',
+    };
+  }
+
+  function fmt(n) {
+    return '$' + Number(n).toLocaleString('es-MX') + ' MXN';
+  }
+
+  function generateAll() {
+    const d = getData();
+    const pkg = getPkg();
+
+    // Summary
+    const sb = document.getElementById('summaryBox');
+    sb.innerHTML = `
+      <div class="sum-row"><span class="sum-key">Cliente</span><span class="sum-val">${d.nombre} &mdash; ${d.empresa}</span></div>
+      ${d.industria ? `<div class="sum-row"><span class="sum-key">Industria</span><span class="sum-val">${d.industria}</span></div>` : ''}
+      ${d.etapa ? `<div class="sum-row"><span class="sum-key">Etapa</span><span class="sum-val">${d.etapa}</span></div>` : ''}
+      <div class="sum-row"><span class="sum-key">Servicios</span><span class="sum-val">${selectedSvcs.map(s=>`<span class="tag">${s}</span>`).join('')}</span></div>
+      <div class="sum-row"><span class="sum-key">Paquete</span><span class="sum-val" style="color:var(--lime);font-family:Montserrat,sans-serif;font-weight:900">${pkg.nombre}</span></div>
+      <div class="sum-total">
+        <span class="sum-total-label">Inversión total</span>
+        <span class="sum-total-val">${fmt(pkg.setup)}</span>
+      </div>
+      ${pkg.mensual ? `<div style="text-align:right;font-size:12px;color:var(--muted);margin-top:6px">+ ${fmt(pkg.mensual)} / mes de gestión</div>` : ''}
+      ${pkg.comision ? `<div style="text-align:right;font-size:12px;color:#b08aff;margin-top:3px">+ ${pkg.comision}</div>` : ''}
+    `;
+
+    const html = buildPropuesta(d, pkg);
+    document.getElementById('outputArea').textContent = html;
+
+    // Download link
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const dlBtn = document.getElementById('downloadBtn');
+    dlBtn.href = url;
+    dlBtn.download = `propuesta-vgg-${(d.empresa||'cliente').toLowerCase().replace(/\s+/g,'-')}.html`;
+  }
+
+  function getData() {
+    return {
+      nombre:   document.getElementById('f_nombre').value.trim()   || 'Cliente',
+      empresa:  document.getElementById('f_empresa').value.trim()  || 'Tu empresa',
+      industria:document.getElementById('f_industria').value       || '',
+      etapa:    document.getElementById('f_etapa').value           || '',
+      problema: document.getElementById('f_problema').value.trim() || '',
+      email:    document.getElementById('f_email').value.trim()    || '',
+      tel:      document.getElementById('f_tel').value.trim()      || '',
+      diag:     document.getElementById('f_diag').value.trim()     || '',
+      incluye:  document.getElementById('f_incluye').value.trim()  || '',
+      plazo:    document.getElementById('f_plazo').value.trim()    || '2–3 semanas',
+      validez:  document.getElementById('f_validez').value.trim()  || '15 días naturales',
+      cierre:   document.getElementById('f_cierre').value.trim()   || '',
+      pauta:    document.getElementById('f_pauta').value.trim()    || '',
+    };
+  }
+
+  function previewProp() {
+    const html = document.getElementById('outputArea').textContent;
+    const blob = new Blob([html], { type: 'text/html' });
+    window.open(URL.createObjectURL(blob), '_blank');
+  }
+
+  function resetAll() {
+    selectedSvcs = [];
+    selectedPkg  = null;
+    document.querySelectorAll('.svc-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('input[type=text],input[type=email],input[type=number],textarea').forEach(i => i.value = '');
+    document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+    document.getElementById('pkgCustomFields').classList.remove('show');
+    for (let i = 0; i <= 4; i++) {
+      const num   = document.getElementById('snum'   + i);
+      const label = document.getElementById('slabel' + i);
+      num.className   = 'step-num'   + (i === 0 ? ' active' : '');
+      label.className = 'step-label' + (i === 0 ? ' active' : '');
+      num.textContent = (i + 1).toString();
+    }
+    currentStep = 0;
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('visible'));
+    document.getElementById('panel0').classList.add('visible');
+    document.getElementById('progressFill').style.width = '20%';
+    window.scrollTo({ top: 0 });
+  }
+
+  /* ═══════════════════════════════════════════════
+     BUILD PROPUESTA HTML
+  ═══════════════════════════════════════════════ */
+  function buildPropuesta(d, pkg) {
+    const fecha = new Date().toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+    const svcsHtml = selectedSvcs.map(s =>
+      `<div class="svc-item"><span class="svc-check-icon">✓</span><span>${s}</span></div>`
+    ).join('');
+    const incluyeHtml = d.incluye.split('\n').filter(l=>l.trim()).map(l =>
+      `<li>${l.trim()}</li>`
+    ).join('');
+    const diagHtml = d.diag.replace(/\n/g,'<br>');
+    const cierreHtml = d.cierre.replace(/\n/g,'<br>');
+    const waNum = (d.tel.replace(/\D/g,'') || '525512345678');
+    const waLink = `https://wa.me/${waNum.startsWith('52') ? waNum : '52' + waNum}?text=${encodeURIComponent('Hola, revisé la propuesta de Very Good Graphics y me interesa hablar.')}`;
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Propuesta VGG para ${d.empresa}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Space Grotesk',sans-serif;background:#080A10;color:#F7F7F2;-webkit-font-smoothing:antialiased}
+.bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 55% 45% at 85% 0%,rgba(123,44,255,.45),transparent 60%),radial-gradient(ellipse 40% 30% at 5% 95%,rgba(123,44,255,.3),transparent 55%),radial-gradient(ellipse 28% 22% at 92% 88%,rgba(232,255,0,.08),transparent 50%),linear-gradient(175deg,#07071a,#080a10 55%,#0a0a12)}
+.bg::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:52px 52px;mask-image:linear-gradient(to bottom,transparent,black 6%,black 90%,transparent);-webkit-mask-image:linear-gradient(to bottom,transparent,black 6%,black 90%,transparent)}
+.wrap{width:min(840px,92%);margin:0 auto}
+header{padding:22px 0 18px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:0;position:sticky;top:0;z-index:50;background:rgba(8,10,16,.85);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.header-inner{display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Montserrat',sans-serif;font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:#F7F7F2;text-decoration:none}
+.logo em{color:#E8FF00;font-style:normal}
+.prop-badge{background:rgba(232,255,0,.1);border:1px solid rgba(232,255,0,.25);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#E8FF00}
+.hero{padding:72px 0 64px}
+.eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:#7B2CFF;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.eyebrow::before{content:"";width:14px;height:2px;background:#7B2CFF;border-radius:2px;flex-shrink:0}
+h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(38px,6.5vw,72px);line-height:.93;text-transform:uppercase;letter-spacing:-1px;margin-bottom:22px}
+h1 em{color:#E8FF00;font-style:normal;display:block}
+.hero-desc{color:#8B8FA8;font-size:16px;line-height:1.75;max-width:580px;margin-bottom:28px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:rgba(123,44,255,.18);border:1px solid rgba(123,44,255,.35);border-radius:999px;padding:7px 16px;font-size:13px;color:#b08aff;font-weight:600;margin-right:8px;margin-bottom:8px}
+.meta-line{margin-top:20px;font-size:12px;color:rgba(139,143,168,.6);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.meta-dot{width:5px;height:5px;border-radius:50%;background:rgba(139,143,168,.3)}
+section{padding:56px 0;border-top:1px solid rgba(255,255,255,.06)}
+h2{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(26px,4vw,42px);text-transform:uppercase;letter-spacing:-.5px;line-height:1;margin-bottom:22px}
+h2 em{color:#E8FF00;font-style:normal}
+.diag-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-left:3px solid #7B2CFF;border-radius:0 14px 14px 0;padding:28px 30px;font-size:15px;line-height:1.85;color:#c8cde0}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:4px}
+.svc-item{background:rgba(255,255,255,.05);border:1px solid rgba(232,255,0,.15);border-radius:11px;padding:13px 16px;font-size:13px;font-weight:600;display:flex;align-items:flex-start;gap:10px;line-height:1.35}
+.svc-check-icon{color:#E8FF00;font-weight:900;font-size:14px;flex-shrink:0;margin-top:1px}
+.inc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;list-style:none}
+.inc-grid li{font-size:13px;color:#c8cde0;padding:11px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;display:flex;align-items:flex-start;gap:10px;line-height:1.4}
+.inc-grid li::before{content:"→";color:#7B2CFF;font-weight:700;flex-shrink:0;margin-top:1px}
+.inv-card{background:linear-gradient(135deg,rgba(123,44,255,.16),rgba(123,44,255,.05));border:1.5px solid rgba(123,44,255,.4);border-radius:20px;padding:36px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.inv-pkg-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#b08aff;margin-bottom:8px}
+.inv-pkg-name{font-family:'Montserrat',sans-serif;font-weight:900;font-size:30px;text-transform:uppercase}
+.inv-pkg-sub{font-size:14px;color:#8B8FA8;margin-top:6px}
+.price-col{text-align:right}
+.price-label-sm{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#8B8FA8;margin-bottom:6px}
+.price-big{font-family:'Montserrat',sans-serif;font-weight:900;font-size:52px;color:#E8FF00;line-height:1}
+.price-big sup{font-size:20px;vertical-align:super}
+.price-sub{font-size:12px;color:#8B8FA8;margin-top:4px}
+.info-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.info-chip{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 14px;font-size:12.5px;color:#c8cde0}
+.info-chip strong{color:#F7F7F2;font-weight:600}
+.cta-block{background:linear-gradient(120deg,rgba(232,255,0,.07),rgba(232,255,0,.03));border:1px solid rgba(232,255,0,.2);border-radius:18px;padding:44px;text-align:center;margin-top:24px}
+.cta-block h2{margin-bottom:14px}
+.cta-block p{color:#8B8FA8;font-size:15px;line-height:1.75;max-width:540px;margin:0 auto 28px}
+.btn-wa{display:inline-flex;align-items:center;gap:12px;background:#25D366;color:#fff;padding:16px 30px;border-radius:12px;text-decoration:none;font-family:'Montserrat',sans-serif;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.3px;transition:opacity .2s}
+.btn-wa:hover{opacity:.88}
+.btn-mail{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#F7F7F2;padding:15px 24px;border-radius:12px;text-decoration:none;font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;margin-left:12px;transition:background .2s}
+.btn-mail:hover{background:rgba(255,255,255,.12)}
+footer{padding:36px 0 28px;border-top:1px solid rgba(255,255,255,.06);text-align:center;color:rgba(247,247,242,.28);font-size:12.5px;line-height:1.8}
+footer a{color:rgba(232,255,0,.6);text-decoration:none}
+@media(max-width:640px){.inv-card{grid-template-columns:1fr}.price-col{text-align:left}.inc-grid{grid-template-columns:1fr}.btn-mail{margin-left:0;margin-top:10px}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<header>
+<div class="wrap header-inner">
+  <a href="https://verygoodgraphics.mx" class="logo">Very <em>Good</em> Graphics</a>
+  <span class="prop-badge">Propuesta Comercial</span>
+</div>
+</header>
+
+<main>
+<div class="wrap">
+
+<div class="hero">
+  <div class="eyebrow">Propuesta preparada exclusivamente para</div>
+  <h1>Hola,<em>${d.nombre}.</em></h1>
+  <p class="hero-desc">Preparamos esta propuesta para <strong>${d.empresa}</strong>${d.industria ? ' en el sector de <strong>' + d.industria + '</strong>' : ''}. Aquí encontrarás nuestro diagnóstico, los servicios recomendados y la inversión propuesta para llevar tu proyecto al siguiente nivel.</p>
+  ${d.industria ? `<span class="chip">${d.industria}</span>` : ''}
+  ${d.etapa ? `<span class="chip">${d.etapa}</span>` : ''}
+  <div class="meta-line">
+    <span>Generada el ${fecha}</span>
+    <span class="meta-dot"></span>
+    <span>Válida por ${d.validez}</span>
+    <span class="meta-dot"></span>
+    <span>Very Good Graphics® · verygoodgraphics.mx</span>
+  </div>
+</div>
+
+${d.diag ? `<section>
+<div class="eyebrow">Diagnóstico</div>
+<h2>Área de <em>oportunidad</em></h2>
+<div class="diag-box">${diagHtml}</div>
+</section>` : ''}
+
+${selectedSvcs.length > 0 ? `<section>
+<div class="eyebrow">Servicios</div>
+<h2>Lo que <em>vamos a hacer</em></h2>
+<div class="svc-grid">${svcsHtml}</div>
+</section>` : ''}
+
+${d.incluye ? `<section>
+<div class="eyebrow">Entregables</div>
+<h2>¿Qué <em>incluye?</em></h2>
+<ul class="inc-grid">${incluyeHtml}</ul>
+</section>` : ''}
+
+<section>
+<div class="eyebrow">Inversión</div>
+<h2>Paquete <em>${pkg.nombre}</em></h2>
+<div class="inv-card">
+  <div>
+    <div class="inv-pkg-label">Modelo de trabajo</div>
+    <div class="inv-pkg-name">${pkg.nombre}</div>
+    <div class="inv-pkg-sub">${pkg.comision ? 'Modelo mixto: pago inicial + comisión' : pkg.mensual ? 'Setup + gestión mensual continua' : 'Pago único por proyecto'}</div>
+  </div>
+  <div class="price-col">
+    <div class="price-label-sm">Inversión setup</div>
+    <div class="price-big"><sup>$</sup>${Number(pkg.setup).toLocaleString('es-MX')}</div>
+    <div class="price-sub">MXN${pkg.mensual ? ` + $${Number(pkg.mensual).toLocaleString('es-MX')} MXN/mes` : ''}</div>
+  </div>
+</div>
+<div class="info-chips">
+  <div class="info-chip">⏱ <strong>Entrega estimada:</strong> ${d.plazo}</div>
+  <div class="info-chip">📅 <strong>Validez:</strong> ${d.validez}</div>
+  ${d.pauta ? `<div class="info-chip">📢 <strong>Pauta sugerida:</strong> ${d.pauta}</div>` : ''}
+  ${pkg.comision ? `<div class="info-chip">💼 <strong>Comisión:</strong> ${pkg.comision}</div>` : ''}
+</div>
+</section>
+
+${d.cierre ? `<section style="border-top:none">
+<div class="cta-block">
+  <div class="eyebrow" style="justify-content:center;margin-bottom:14px">Para cerrar</div>
+  <h2>¿Listo para <em>arrancar?</em></h2>
+  <p>${cierreHtml}</p>
+  <a href="${waLink}" class="btn-wa" target="_blank" rel="noopener">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    Escríbenos por WhatsApp
+  </a>
+  ${d.email ? `<a href="mailto:${d.email}" class="btn-mail">✉ Responder por correo</a>` : ''}
+</div>
+</section>` : ''}
+
+</div>
+</main>
+
+<footer>
+<div class="wrap">
+  © ${new Date().getFullYear()} <strong>Very Good Graphics®</strong> · <a href="https://verygoodgraphics.mx">verygoodgraphics.mx</a> · hola@verygoodgraphics.mx<br>
+  Propuesta generada el ${fecha} para uso exclusivo de ${d.nombre} / ${d.empresa}
+</div>
+</footer>
+</body>
+</html>`;
+  }
+</script>
+
+</body>
+</html>
