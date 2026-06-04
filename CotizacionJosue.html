@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Propuesta VGG × Eval360 — Lanzamiento Comercial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Space Grotesk',sans-serif;background:#080A10;color:#F7F7F2;-webkit-font-smoothing:antialiased}
+
+/* PASSWORD SCREEN */
+#pw-screen{position:fixed;inset:0;z-index:9999;background:#080A10;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 60% 50% at 80% 10%,rgba(123,44,255,.45),transparent 60%),
+  radial-gradient(ellipse 40% 35% at 5% 90%,rgba(123,44,255,.3),transparent 55%),
+  linear-gradient(175deg,#07071a,#080a10);}
+#pw-screen::before{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:52px 52px;}
+.pw-box{position:relative;z-index:1;text-align:center;width:min(420px,90%)}
+.pw-logo{font-family:'Montserrat',sans-serif;font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:#F7F7F2;margin-bottom:36px;display:block}
+.pw-logo em{color:#E8FF00;font-style:normal}
+.pw-lock{width:52px;height:52px;border-radius:50%;border:2px solid rgba(232,255,0,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:22px}
+.pw-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;letter-spacing:-.3px;margin-bottom:6px}
+.pw-title em{color:#E8FF00;font-style:normal}
+.pw-sub{font-size:13px;color:#8B8FA8;margin-bottom:28px;line-height:1.6}
+.pw-input-wrap{position:relative;margin-bottom:12px}
+#pw-input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px 50px 14px 18px;font-family:'Space Grotesk',sans-serif;font-size:15px;color:#F7F7F2;outline:none;text-align:center;letter-spacing:2px;transition:border-color .2s}
+#pw-input:focus{border-color:#7B2CFF}
+#pw-input::placeholder{letter-spacing:0;color:rgba(139,143,168,.4)}
+#pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8B8FA8;cursor:pointer;font-size:16px;padding:4px}
+#pw-btn{width:100%;background:#E8FF00;border:none;border-radius:12px;padding:14px;font-family:'Montserrat',sans-serif;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:#080A10;cursor:pointer;transition:opacity .2s,transform .15s;margin-bottom:8px}
+#pw-btn:hover{opacity:.88;transform:translateY(-1px)}
+#pw-error{font-size:12px;color:#f87171;min-height:18px;transition:opacity .2s;opacity:0}
+#pw-error.show{opacity:1}
+.pw-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(232,255,0,.08);border:1px solid rgba(232,255,0,.15);border-radius:6px;padding:5px 12px;font-size:11px;color:#c8d080;margin-top:20px}
+#pw-screen.hide{opacity:0;pointer-events:none;transition:opacity .5s ease}
+.bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 88% -5%,rgba(123,44,255,.55),transparent 58%),
+    radial-gradient(ellipse 45% 35% at 4% 97%,rgba(123,44,255,.38),transparent 55%),
+    radial-gradient(ellipse 30% 25% at 94% 90%,rgba(232,255,0,.09),transparent 50%),
+    linear-gradient(175deg,#07071a,#080a10 55%,#0a0a12);}
+.bg::after{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.026) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.026) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:linear-gradient(to bottom,transparent,black 5%,black 92%,transparent);
+  -webkit-mask-image:linear-gradient(to bottom,transparent,black 5%,black 92%,transparent);}
+.wrap{width:min(860px,92%);margin:0 auto}
+header{position:sticky;top:0;z-index:50;background:rgba(8,10,16,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07);padding:18px 0}
+.h-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.logo{font-family:'Montserrat',sans-serif;font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:#F7F7F2;text-decoration:none}
+.logo em{color:#E8FF00;font-style:normal}
+.prop-chip{background:rgba(232,255,0,.1);border:1px solid rgba(232,255,0,.22);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#E8FF00}
+.hero{padding:80px 0 68px}
+.eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:#7B2CFF;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.eyebrow::before{content:"";width:14px;height:2px;background:#7B2CFF;border-radius:2px}
+h1{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(42px,7vw,80px);line-height:.91;text-transform:uppercase;letter-spacing:-2px;margin-bottom:24px}
+.lime{color:#E8FF00}
+.hero-sub{color:#8B8FA8;font-size:16px;line-height:1.8;max-width:620px;margin-bottom:28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:rgba(123,44,255,.18);border:1px solid rgba(123,44,255,.35);border-radius:999px;padding:7px 16px;font-size:13px;color:#b08aff;font-weight:600}
+.chip-lime{background:rgba(232,255,0,.1);border-color:rgba(232,255,0,.3);color:#E8FF00}
+.meta{font-size:12px;color:rgba(139,143,168,.5);display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.meta-sep{width:4px;height:4px;border-radius:50%;background:rgba(139,143,168,.3)}
+section{padding:64px 0;border-top:1px solid rgba(255,255,255,.06)}
+h2{font-family:'Montserrat',sans-serif;font-weight:900;font-size:clamp(28px,4.5vw,48px);text-transform:uppercase;letter-spacing:-.5px;line-height:.94;margin-bottom:10px}
+.sec-sub{color:#8B8FA8;font-size:15px;line-height:1.7;margin-bottom:32px;max-width:600px}
+.diag-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-left:3px solid #7B2CFF;border-radius:0 14px 14px 0;padding:28px 32px;font-size:15px;line-height:1.85;color:#c8cde0}
+.diag-box strong{color:#F7F7F2;font-weight:600}
+.opp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:4px}
+.opp-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:20px;position:relative;overflow:hidden}
+.opp-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#7B2CFF,transparent)}
+.opp-num{font-family:'Montserrat',sans-serif;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(123,44,255,.7);margin-bottom:8px}
+.opp-card h4{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;margin-bottom:6px;line-height:1.3}
+.opp-card p{font-size:13px;color:#8B8FA8;line-height:1.55}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.svc-card{background:rgba(255,255,255,.045);border:1px solid rgba(232,255,0,.14);border-radius:14px;padding:20px;position:relative}
+.svc-card::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#E8FF00,transparent 70%)}
+.svc-icon-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.svc-dot{width:8px;height:8px;border-radius:50%;background:#E8FF00;box-shadow:0 0 8px rgba(232,255,0,.5);flex-shrink:0}
+.svc-card-name{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.3px}
+.svc-items{list-style:none;display:flex;flex-direction:column;gap:7px}
+.svc-items li{font-size:13px;color:#c8cde0;display:flex;align-items:flex-start;gap:8px;line-height:1.4}
+.svc-items li::before{content:"→";color:#7B2CFF;font-weight:700;flex-shrink:0;margin-top:1px;font-size:12px}
+.svc-items li strong{color:#E8FF00;font-weight:700}
+.proceso-list{display:flex;flex-direction:column;gap:0;margin-top:4px}
+.proceso-item{display:flex;gap:20px;align-items:flex-start;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.proceso-item:last-child{border-bottom:none}
+.proceso-num{width:44px;height:44px;border-radius:50%;border:2px solid #7B2CFF;display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-weight:900;font-size:13px;color:#F7F7F2;flex-shrink:0;box-shadow:0 0 20px rgba(123,44,255,.35);position:relative}
+.proceso-num::after{content:"";position:absolute;bottom:-21px;left:50%;transform:translateX(-50%);width:1px;height:21px;background:linear-gradient(to bottom,rgba(123,44,255,.4),transparent)}
+.proceso-item:last-child .proceso-num::after{display:none}
+.proceso-content h4{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;margin-bottom:4px}
+.proceso-content p{font-size:13.5px;color:#8B8FA8;line-height:1.6}
+
+/* PRECIO */
+.price-section{padding:64px 0;border-top:1px solid rgba(255,255,255,.06)}
+.price-card{background:linear-gradient(135deg,rgba(123,44,255,.16),rgba(123,44,255,.04));border:1.5px solid rgba(123,44,255,.4);border-radius:22px;padding:40px;position:relative;overflow:hidden}
+.price-card::before{content:"";position:absolute;top:-50px;right:-50px;width:220px;height:220px;border-radius:50%;background:radial-gradient(rgba(232,255,0,.07),transparent 70%);pointer-events:none}
+.price-top{display:grid;grid-template-columns:1fr auto;gap:28px;align-items:flex-start;margin-bottom:28px}
+.price-pkg-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#b08aff;margin-bottom:8px}
+.price-pkg-name{font-family:'Montserrat',sans-serif;font-weight:900;font-size:28px;text-transform:uppercase;letter-spacing:-.3px;margin-bottom:8px}
+.price-pkg-sub{font-size:14px;color:#8B8FA8;line-height:1.6}
+.price-col{text-align:right}
+.price-original{font-size:15px;color:rgba(139,143,168,.5);text-decoration:line-through;margin-bottom:6px}
+.price-main{font-family:'Montserrat',sans-serif;font-weight:900;font-size:60px;color:#E8FF00;line-height:1}
+.price-main sup{font-size:24px;vertical-align:super}
+.price-currency{font-size:13px;color:#8B8FA8;margin-top:5px}
+
+/* DISCOUNT STRIPS */
+.disc-strips{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+
+/* Strip 1 — lima (30%) */
+.disc-strip{background:linear-gradient(90deg,rgba(232,255,0,.11),rgba(232,255,0,.03));border:1px solid rgba(232,255,0,.28);border-radius:12px;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.disc-left{display:flex;align-items:center;gap:14px}
+.disc-pct{background:#E8FF00;color:#080A10;font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;padding:5px 13px;border-radius:8px;letter-spacing:-.3px;white-space:nowrap}
+.disc-text{font-size:13px;color:#c8d080;font-weight:600;line-height:1.4}
+.disc-text small{display:block;font-size:11px;color:rgba(200,208,128,.6);font-weight:400;margin-top:1px}
+.disc-right{text-align:right}
+.disc-original-val{font-size:12px;color:rgba(139,143,168,.55);text-decoration:line-through}
+.disc-result{font-size:15px;color:#E8FF00;font-family:'Montserrat',sans-serif;font-weight:900;margin-top:2px}
+
+/* Strip 2 — rojo (descuento adicional) */
+.disc-strip-red{background:linear-gradient(90deg,rgba(220,38,38,.14),rgba(220,38,38,.04));border:1px solid rgba(220,38,38,.4);border-radius:12px;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.disc-pct-red{background:#DC2626;color:#fff;font-family:'Montserrat',sans-serif;font-weight:900;font-size:18px;padding:5px 13px;border-radius:8px;letter-spacing:-.3px;white-space:nowrap}
+.disc-text-red{font-size:13px;color:#fca5a5;font-weight:600;line-height:1.4}
+.disc-text-red small{display:block;font-size:11px;color:rgba(252,165,165,.6);font-weight:400;margin-top:1px}
+.disc-result-red{font-size:15px;color:#f87171;font-family:'Montserrat',sans-serif;font-weight:900;margin-top:2px}
+
+/* PRECIO FINAL HERO */
+.final-price-block{background:rgba(0,0,0,.3);border:2px solid rgba(232,255,0,.35);border-radius:16px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:22px}
+.final-price-label{font-family:'Montserrat',sans-serif;font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:rgba(247,247,242,.5)}
+.final-price-val{font-family:'Montserrat',sans-serif;font-weight:900;font-size:52px;color:#E8FF00;line-height:1}
+.final-price-val sup{font-size:22px;vertical-align:super}
+.final-price-sub{font-size:12px;color:#8B8FA8;margin-top:3px;text-align:right}
+.final-saving{background:rgba(232,255,0,.1);border:1px solid rgba(232,255,0,.2);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;color:#c8d080;text-align:center;margin-bottom:22px}
+
+.info-chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip-info{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 14px;font-size:12.5px;color:#c8cde0}
+.chip-info strong{color:#F7F7F2;font-weight:600}
+.pauta-note{background:rgba(123,44,255,.08);border:1px solid rgba(123,44,255,.2);border-radius:12px;padding:16px 20px;margin-top:16px;font-size:13.5px;color:#c8cde0;line-height:1.65}
+.pauta-note strong{color:#b08aff}
+
+.cta-section{margin-top:56px}
+.cta-card{background:linear-gradient(120deg,rgba(232,255,0,.08),rgba(232,255,0,.02));border:1px solid rgba(232,255,0,.22);border-radius:22px;padding:54px 44px;text-align:center}
+.cta-card .eyebrow{justify-content:center;margin-bottom:16px}
+.cta-card h2{margin-bottom:14px}
+.cta-card p{color:#8B8FA8;font-size:15px;line-height:1.8;max-width:520px;margin:0 auto 32px}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-wa{display:inline-flex;align-items:center;gap:12px;background:#25D366;color:#fff;padding:16px 30px;border-radius:12px;text-decoration:none;font-family:'Montserrat',sans-serif;font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.3px;transition:opacity .2s}
+.btn-wa:hover{opacity:.88}
+.btn-mail{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:#F7F7F2;padding:15px 24px;border-radius:12px;text-decoration:none;font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;transition:background .2s}
+.btn-mail:hover{background:rgba(255,255,255,.12)}
+.urgency{display:inline-flex;align-items:center;gap:8px;background:rgba(232,255,0,.08);border:1px solid rgba(232,255,0,.2);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;color:#c8d080;margin-bottom:24px;letter-spacing:.3px}
+.urgency-dot{width:7px;height:7px;border-radius:50%;background:#E8FF00;animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+footer{padding:40px 0 28px;border-top:1px solid rgba(255,255,255,.06);text-align:center;color:rgba(247,247,242,.25);font-size:12.5px;line-height:1.9}
+footer a{color:rgba(232,255,0,.5);text-decoration:none}
+footer strong{color:rgba(247,247,242,.4)}
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+@media(max-width:640px){
+  .price-top{grid-template-columns:1fr}.price-col{text-align:left}.price-main{font-size:44px}
+  .final-price-val{font-size:38px}.cta-card{padding:36px 24px}.h-inner{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD SCREEN -->
+<div id="pw-screen">
+  <div class="pw-box">
+    <span class="pw-logo">Very <em>Good</em> Graphics</span>
+    <div class="pw-lock">🔒</div>
+    <div class="pw-title">Propuesta <em>Confidencial</em></div>
+    <div class="pw-sub">Este documento es de uso exclusivo.<br>Ingresa la contraseña para continuar.</div>
+    <div class="pw-input-wrap">
+      <input type="password" id="pw-input" placeholder="Contraseña" autocomplete="off">
+      <button id="pw-toggle" onclick="togglePass()" type="button">👁</button>
+    </div>
+    <button id="pw-btn" onclick="checkPass()">Acceder →</button>
+    <div id="pw-error"></div>
+    <div class="pw-badge">🔐 Documento confidencial · Very Good Graphics®</div>
+  </div>
+</div>
+
+<div class="bg"></div>
+
+<header>
+  <div class="wrap h-inner">
+    <a href="https://verygoodgraphics.mx" class="logo">Very <em>Good</em> Graphics</a>
+    <span class="prop-chip">Propuesta Comercial · Confidencial</span>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero fade-in">
+  <div class="eyebrow">Propuesta preparada exclusivamente para</div>
+  <h1>Hola,<br><span class="lime">Josué.</span></h1>
+  <p class="hero-sub">Revisamos <strong>Eval360</strong> a fondo. El producto ya existe, ya funciona y tiene propuesta clara — eso es lo difícil. Lo que falta es construir el sistema que lo lleve a los clientes correctos. Eso es exactamente lo que hacemos.</p>
+  <div class="chips">
+    <span class="chip">SaaS / Tecnología HR</span>
+    <span class="chip">Startup en arranque</span>
+    <span class="chip chip-lime">Lanzamiento comercial</span>
+  </div>
+  <div class="meta">
+    <span>Generada el 4 de junio de 2026</span><span class="meta-sep"></span>
+    <span>Válida por 15 días naturales</span><span class="meta-sep"></span>
+    <span>Very Good Graphics® · verygoodgraphics.mx</span>
+  </div>
+</div>
+
+<!-- DIAGNÓSTICO -->
+<section class="fade-in">
+  <div class="eyebrow">Diagnóstico</div>
+  <h2>Lo que vemos en <span class="lime">Eval360</span></h2>
+  <div class="sec-sub">Revisamos tu plataforma y detectamos dónde está la oportunidad real.</div>
+  <div class="diag-box">
+    Eval360 tiene algo que muchos proyectos no logran en meses: <strong>un producto que ya se entiende</strong>. La plataforma une evaluación 360°, psicometría digital y estudios socioeconómicos en un solo lugar — eso es una propuesta poderosa para el mercado de RRHH.<br><br>
+    El problema hoy no es el producto. El problema es que la landing todavía <strong>informa en lugar de vender</strong>. Dice qué hace Eval360, pero no habla de los dolores del comprador: evaluaciones lentas, reportes en Excel, falta de trazabilidad, decisiones de talento sin datos. Y sin esos argumentos, el visitante no convierte.<br><br>
+    Además, una sola campaña genérica deja fuera a compradores que buscan específicamente psicometría para reclutamiento o estudios socioeconómicos para contratación. <strong>Campañas separadas por intención = más conversión, menos costo por lead.</strong><br><br>
+    La oportunidad está clara. Y el timing es el correcto para construir esto ahora, antes de que alguien más lo haga.
+  </div>
+</section>
+
+<!-- OPORTUNIDADES -->
+<section class="fade-in">
+  <div class="eyebrow">Áreas de acción</div>
+  <h2>4 puntos que <span class="lime">vamos a resolver</span></h2>
+  <div class="sec-sub">No teoría — acciones concretas con impacto directo en leads y ventas.</div>
+  <div class="opp-grid">
+    <div class="opp-card">
+      <div class="opp-num">01</div>
+      <h4>Mensaje comercial que vende</h4>
+      <p>Transformar la landing de informativa a vendedora: dolores reales, casos de uso, diferenciadores y CTAs que empujan a la demo.</p>
+    </div>
+    <div class="opp-card">
+      <div class="opp-num">02</div>
+      <h4>Campañas segmentadas por servicio</h4>
+      <p>Una campaña por módulo: Evaluación 360°, Psicometría y Estudios Socioeconómicos. Más relevancia = más conversión = menos gasto.</p>
+    </div>
+    <div class="opp-card">
+      <div class="opp-num">03</div>
+      <h4>Presencia digital desde cero</h4>
+      <p>Creación y configuración de todas las redes: página de Meta, Instagram y LinkedIn. Perfil profesional listo para vender desde el día uno.</p>
+    </div>
+    <div class="opp-card">
+      <div class="opp-num">04</div>
+      <h4>Sistema de seguimiento de leads</h4>
+      <p>Medición de conversiones, seguimiento de demos y mensajes de prospección listos para cerrar por WhatsApp y LinkedIn.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="fade-in">
+  <div class="eyebrow">Alcance del proyecto</div>
+  <h2>Lo que <span class="lime">incluye</span> esta propuesta</h2>
+  <div class="sec-sub">Todo lo que necesita Eval360 para pasar de plataforma funcional a máquina de adquisición de clientes.</div>
+  <div class="svc-grid">
+
+    <div class="svc-card">
+      <div class="svc-icon-row"><div class="svc-dot"></div><div class="svc-card-name">Estrategia & Diagnóstico</div></div>
+      <ul class="svc-items">
+        <li>Definición de <strong>3 buyer personas</strong> (HR Manager, Reclutador, Director)</li>
+        <li>Propuesta de valor y mensajes clave por segmento</li>
+        <li>Mapa de dolores y argumentos de venta</li>
+        <li>Documento estratégico + guía de mensajes</li>
+      </ul>
+    </div>
+
+    <div class="svc-card">
+      <div class="svc-icon-row"><div class="svc-dot"></div><div class="svc-card-name">Landing Page Optimizada</div></div>
+      <ul class="svc-items">
+        <li><strong>1 landing</strong> rediseñada para conversión</li>
+        <li>Copywriting completo orientado a demos</li>
+        <li>Sección de dolores, casos de uso y prueba social</li>
+        <li><strong>2 rondas</strong> de revisión incluidas</li>
+        <li>Plataforma: HTML / Netlify o WordPress</li>
+      </ul>
+    </div>
+
+    <div class="svc-card">
+      <div class="svc-icon-row"><div class="svc-dot"></div><div class="svc-card-name">Campañas de Publicidad Digital</div></div>
+      <ul class="svc-items">
+        <li><strong>3 campañas</strong> en Google Ads + Meta Ads</li>
+        <li>Una por módulo: 360° · Psicometría · Estudio SE</li>
+        <li><strong>3 copies</strong> por campaña (9 en total)</li>
+        <li>Configuración: Pixel, tracking, audiencias, remarketing</li>
+        <li>Gestión durante <strong>1 mes</strong> incluida</li>
+      </ul>
+    </div>
+
+    <div class="svc-card">
+      <div class="svc-icon-row"><div class="svc-dot"></div><div class="svc-card-name">Redes Sociales — Gestión & Contenido</div></div>
+      <ul class="svc-items">
+        <li>Creación de <strong>Página Meta + Instagram + LinkedIn</strong></li>
+        <li>Configuración completa de perfiles y branding</li>
+        <li>Estrategia editorial mensual</li>
+        <li>Copies y textos para <strong>12 publicaciones</strong></li>
+        <li>Calendario de publicación incluido</li>
+        <li>Gestión y publicación durante <strong>1 mes</strong></li>
+      </ul>
+    </div>
+
+    <div class="svc-card">
+      <div class="svc-icon-row"><div class="svc-dot"></div><div class="svc-card-name">Prospección & Seguimiento</div></div>
+      <ul class="svc-items">
+        <li>Mensaje de prospección para <strong>LinkedIn + WhatsApp</strong></li>
+        <li>Secuencia de <strong>3 emails</strong> de seguimiento post-demo</li>
+        <li>Guion para video demo (Loom o grabado)</li>
+        <li>Configuración de medición de leads y demos</li>
+      </ul>
+    </div>
+
+    <div class="svc-card">
+      <div class="svc-icon-row"><div class="svc-dot"></div><div class="svc-card-name">Diseño Gráfico — Producción Visual</div></div>
+      <ul class="svc-items">
+        <li><strong>12 piezas</strong> para posts (una por publicación)</li>
+        <li><strong>4 carruseles</strong> comerciales</li>
+        <li><strong>8 stories</strong> / formatos verticales</li>
+        <li>Banners y creatividades para campañas paid</li>
+        <li>Formatos: PNG, PDF, MP4 animado</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- PROCESO -->
+<section class="fade-in">
+  <div class="eyebrow">Cómo trabajamos</div>
+  <h2>El proceso en <span class="lime">4 semanas</span></h2>
+  <div class="sec-sub">Arranque rápido, entregas semanales, resultados desde el día 15.</div>
+  <div class="proceso-list">
+    <div class="proceso-item">
+      <div class="proceso-num">S1</div>
+      <div class="proceso-content">
+        <h4>Semana 1 — Estrategia y fundamentos</h4>
+        <p>Kick-off, buyer personas, mensajes clave, mapa de dolores y estructura de campañas. Creación y configuración de redes sociales. Documento estratégico completo al cierre de semana.</p>
+      </div>
+    </div>
+    <div class="proceso-item">
+      <div class="proceso-num">S2</div>
+      <div class="proceso-content">
+        <h4>Semana 2 — Landing y creatividades</h4>
+        <p>Diseño y copy de la landing optimizada, piezas gráficas para anuncios y redes, carruseles comerciales. Primera ronda de revisiones.</p>
+      </div>
+    </div>
+    <div class="proceso-item">
+      <div class="proceso-num">S3</div>
+      <div class="proceso-content">
+        <h4>Semana 3 — Campañas activas</h4>
+        <p>Lanzamiento de campañas en Google Ads y Meta Ads. Instalación de pixel, tracking y remarketing. Primeros datos de rendimiento.</p>
+      </div>
+    </div>
+    <div class="proceso-item">
+      <div class="proceso-num">S4</div>
+      <div class="proceso-content">
+        <h4>Semana 4 — Optimización y entrega</h4>
+        <p>Ajuste de campañas con datos reales, entrega de materiales de prospección, calendario de contenido y reporte de arranque.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRECIO -->
+<div class="price-section fade-in">
+  <div class="eyebrow">Inversión</div>
+  <h2>Paquete <span class="lime">Lanzamiento Comercial</span></h2>
+  <div class="sec-sub" style="margin-bottom:24px">Precio especial de arranque — dos descuentos aplicados exclusivamente para este proyecto.</div>
+
+  <div class="price-card">
+
+    <!-- Precio base -->
+    <div class="price-top">
+      <div>
+        <div class="price-pkg-label">Modelo de trabajo</div>
+        <div class="price-pkg-name">Lanzamiento Comercial</div>
+        <div class="price-pkg-sub">Setup completo del sistema de adquisición de clientes.<br>Estrategia · Landing · Campañas · Redes · Contenido · Diseño</div>
+      </div>
+      <div class="price-col">
+        <div class="price-original">$18,000 MXN</div>
+        <div class="price-main"><sup>$</sup>18,000</div>
+        <div class="price-currency">Precio de lista</div>
+      </div>
+    </div>
+
+    <!-- Dos strips de descuento -->
+    <div class="disc-strips">
+
+      <!-- Strip 1: 30% lanzamiento (lima) -->
+      <div class="disc-strip">
+        <div class="disc-left">
+          <div class="disc-pct">30% OFF</div>
+          <div class="disc-text">
+            Descuento de lanzamiento
+            <small>Por ser proyecto de arranque · Válido 15 días</small>
+          </div>
+        </div>
+        <div class="disc-right">
+          <div class="disc-original-val">$18,000 MXN</div>
+          <div class="disc-result">→ $12,600 MXN</div>
+        </div>
+      </div>
+
+      <!-- Strip 2: descuento adicional (rojo) -->
+      <div class="disc-strip-red">
+        <div class="disc-left">
+          <div class="disc-pct-red">+ 60% OFF</div>
+          <div class="disc-text-red">
+            Descuento adicional autorizado
+            <small>Precio especial exclusivo para este proyecto</small>
+          </div>
+        </div>
+        <div class="disc-right">
+          <div class="disc-original-val" style="color:rgba(252,165,165,.5)">$12,600 MXN</div>
+          <div class="disc-result-red">→ $5,000 MXN</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Precio final destacado -->
+    <div class="final-price-block">
+      <div class="final-price-label">Precio final para Eval360</div>
+      <div>
+        <div class="final-price-val"><sup>$</sup>5,000</div>
+        <div class="final-price-sub">MXN · Pago único de setup</div>
+      </div>
+    </div>
+
+    <div class="final-saving">🎉 Ahorro total: $13,000 MXN vs. precio de lista — descuento combinado del 72%</div>
+
+    <div class="info-chips">
+      <div class="chip-info">⏱ <strong>Entrega:</strong> 3–4 semanas</div>
+      <div class="chip-info">📅 <strong>Oferta válida:</strong> 15 días naturales</div>
+      <div class="chip-info">🔄 <strong>Revisiones:</strong> 2 rondas incluidas</div>
+      <div class="chip-info">📋 <strong>Contrato:</strong> Sin permanencia forzada</div>
+    </div>
+
+    <div class="pauta-note">
+      <strong>Sobre la pauta publicitaria:</strong> El presupuesto de anuncios en Google y Meta se maneja directamente en tus cuentas — tú decides cuánto invertir. Very Good Graphics administra las campañas.
+    </div>
+
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section fade-in" style="padding-bottom:80px">
+  <div class="cta-card">
+    <div class="eyebrow" style="justify-content:center;margin-bottom:16px">Para cerrar</div>
+    <h2>¿Arrancamos, <span class="lime">Josué?</span></h2>
+    <div class="urgency"><div class="urgency-dot"></div>Oferta válida 15 días · Cupo para 1 cliente nuevo este mes</div>
+    <p>Eval360 tiene el producto. Nosotros ponemos el sistema para llevarlo a los clientes correctos. No se trata solo de hacer publicidad — se trata de construir la máquina de adquisición completa: mensaje, landing, campañas, contenido y seguimiento. Todo en un solo equipo, con un solo objetivo: que Eval360 consiga sus primeros clientes pagados.</p>
+    <div class="cta-btns">
+      <a href="https://wa.me/525565324627?text=Hola%20Juan%2C%20vi%20la%20propuesta%20para%20Eval360%20y%20quiero%20arrancar" class="btn-wa" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Acepto — hablemos por WhatsApp
+      </a>
+      <a href="mailto:verygoodgraphicsmx@gmail.com?subject=Propuesta%20VGG%20%E2%80%94%20Quiero%20arrancar" class="btn-mail">✉ Responder por correo</a>
+    </div>
+  </div>
+</div>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    © 2026 <strong>Very Good Graphics®</strong> · <a href="https://verygoodgraphics.mx">verygoodgraphics.mx</a> · verygoodgraphicsmx@gmail.com<br>
+    Documento confidencial preparado el 4 de junio de 2026 · Uso exclusivo de Josué / Eval360<br>
+    Esta propuesta es confidencial y no debe ser compartida con terceros sin autorización de Very Good Graphics.
+  </div>
+</footer>
+
+<script>
+// ── PASSWORD PROTECTION ──
+const PASS = 'Marketing1';
+
+function checkPass() {
+  const val = document.getElementById('pw-input').value;
+  const err = document.getElementById('pw-error');
+  if (val === PASS) {
+    const screen = document.getElementById('pw-screen');
+    screen.classList.add('hide');
+    setTimeout(() => screen.style.display = 'none', 500);
+    sessionStorage.setItem('vgg_auth', '1');
+  } else {
+    err.textContent = 'Contraseña incorrecta. Intenta de nuevo.';
+    err.classList.add('show');
+    document.getElementById('pw-input').style.borderColor = '#DC2626';
+    setTimeout(() => {
+      err.classList.remove('show');
+      document.getElementById('pw-input').style.borderColor = '';
+    }, 2500);
+  }
+}
+
+function togglePass() {
+  const inp = document.getElementById('pw-input');
+  const btn = document.getElementById('pw-toggle');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPass();
+});
+
+// Si ya autenticó en esta sesión, saltar pantalla
+if (sessionStorage.getItem('vgg_auth') === '1') {
+  document.getElementById('pw-screen').style.display = 'none';
+}
+
+// ── SCROLL FADE IN ──
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
