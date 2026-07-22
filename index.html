@@ -103,6 +103,19 @@
       gap: 10px;
       text-decoration: none;
       flex-shrink: 0;
+      width: 96px;
+      height: 58px;
+      overflow: hidden;
+      position: relative;
+    }
+    .logo > img {
+      position: absolute;
+      width: 146px !important;
+      height: auto !important;
+      max-width: none;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -49%);
     }
     .logo-mark {
       width: 44px; height: 44px;
@@ -689,14 +702,98 @@
     .d3  { animation-delay: .34s; }
     .d4  { animation-delay: .48s; }
 
+    /* ── BRAND SYSTEM + MOBILE NAV ── */
+    .menu-toggle {
+      display: none;
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      background: rgba(255,255,255,.05);
+      color: var(--white);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .menu-toggle span,
+    .menu-toggle span::before,
+    .menu-toggle span::after {
+      display: block;
+      width: 20px;
+      height: 2px;
+      border-radius: 2px;
+      background: currentColor;
+      position: relative;
+      transition: transform .2s, opacity .2s;
+    }
+    .menu-toggle span::before,
+    .menu-toggle span::after { content: ""; position: absolute; left: 0; }
+    .menu-toggle span::before { top: -6px; }
+    .menu-toggle span::after { top: 6px; }
+    .menu-toggle[aria-expanded="true"] span { background: transparent; }
+    .menu-toggle[aria-expanded="true"] span::before { transform: translateY(6px) rotate(45deg); }
+    .menu-toggle[aria-expanded="true"] span::after { transform: translateY(-6px) rotate(-45deg); }
+
+    .hero-right { height: 580px; isolation: isolate; }
+    .hero-panel {
+      position: absolute;
+      inset: 34px 0 34px 34px;
+      border-radius: 30px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(145deg, rgba(18,22,32,.94), rgba(8,10,16,.78));
+      box-shadow: 0 35px 90px rgba(0,0,0,.55), 0 0 80px rgba(123,44,255,.18);
+      transform: perspective(1200px) rotateY(-4deg) rotateX(1deg);
+    }
+    .hero-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      z-index: 1;
+    }
+    .hero-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.38; filter:saturate(.85) contrast(1.1); }
+    .hero-panel::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(8,10,16,.08),rgba(8,10,16,.92) 78%),radial-gradient(circle at 75% 20%,rgba(123,44,255,.35),transparent 45%); z-index:1; }
+    .hero-panel-content { position:absolute; inset:auto 34px 34px; z-index:2; }
+    .hero-brand { width:112px; height:74px; overflow:hidden; position:relative; margin-bottom:18px; filter:drop-shadow(0 0 24px rgba(232,255,0,.22)); }
+    .hero-brand img { position:absolute; width:180px; max-width:none; left:50%; top:50%; transform:translate(-50%,-50%); }
+    .hero-panel-content h3 { font-family:'Montserrat',sans-serif; font-size:clamp(23px,3vw,38px); line-height:1.02; text-transform:uppercase; max-width:420px; }
+    .hero-panel-content h3 span { color:var(--lime); }
+    .hero-pills { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+    .hero-pills span { border:1px solid rgba(255,255,255,.15); border-radius:999px; padding:8px 12px; background:rgba(8,10,16,.58); backdrop-filter:blur(12px); font-size:11px; font-weight:700; letter-spacing:1.1px; text-transform:uppercase; }
+    .hero-orbit { position:absolute; width:130px; height:130px; right:-18px; top:0; border:1px solid rgba(232,255,0,.36); border-radius:50%; box-shadow:inset 0 0 35px rgba(232,255,0,.08),0 0 40px rgba(232,255,0,.08); animation:float 7s ease-in-out infinite; z-index:3; }
+    .hero-orbit::before,.hero-orbit::after { content:""; position:absolute; border:1px solid rgba(123,44,255,.7); border-radius:50%; }
+    .hero-orbit::before { inset:20px; }
+    .hero-orbit::after { inset:46px; background:var(--lime); border:0; box-shadow:0 0 24px var(--lime-glow); }
+    .hero-signal { position:absolute; left:0; top:90px; z-index:4; padding:13px 16px; border-radius:14px; background:rgba(18,22,32,.86); border:1px solid rgba(255,255,255,.14); backdrop-filter:blur(18px); font-size:12px; box-shadow:0 20px 50px rgba(0,0,0,.35); }
+    .hero-signal b { display:block; color:var(--lime); font-family:'Montserrat',sans-serif; font-size:16px; margin-bottom:3px; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 960px) {
-      nav { display: none; }
+      .menu-toggle { display: flex; }
+      header nav {
+        display: none;
+        position: absolute;
+        top: 68px;
+        left: 4%;
+        right: 4%;
+        padding: 18px;
+        border-radius: 18px;
+        flex-direction: column;
+        gap: 0;
+        background: rgba(8,10,16,.97);
+        border: 1px solid rgba(255,255,255,.12);
+        box-shadow: 0 24px 60px rgba(0,0,0,.5);
+      }
+      header nav.is-open { display: flex; }
+      header nav a { padding: 14px 10px; border-bottom: 1px solid rgba(255,255,255,.07); font-size: 15px; }
+      header nav a:last-child { border-bottom: 0; }
       .hero { grid-template-columns: 1fr; padding: 48px 0 64px; min-height: auto; }
-      .hero-right { height: 300px; order: -1; }
-      .hero-logo-img { width: 220px; height: 220px; right: 4%; top: 6%; }
-      .hero-img { width: 100%; right: 0; }
-      .hero-badge { display: none; }
+      .hero-right { height: 470px; }
+      .hero-panel { inset: 24px 6px; transform: none; }
+      .hero-orbit { right: -4px; }
+      .hero-signal { left: -2px; top: 58px; }
       .section-head { grid-template-columns: 1fr; gap: 14px; }
       .services-grid { grid-template-columns: repeat(2, 1fr); }
       .services-row2 { grid-template-columns: repeat(2, 1fr); }
@@ -708,6 +805,21 @@
       .footer-grid { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 560px) {
+      .wrap { width: min(100% - 32px, 1180px); }
+      .nav-inner { height: 72px; }
+      .logo { width: 92px; height: 58px; }
+      .logo > img { width: 146px !important; }
+      .hero { padding-top: 38px; gap: 24px; }
+      h1 { font-size: clamp(43px, 13vw, 62px); }
+      .hero-desc { font-size: 16px; margin: 22px 0 30px; }
+      .hero-right { height: 400px; }
+      .hero-panel { inset: 18px 0; border-radius: 24px; }
+      .hero-panel-content { inset: auto 22px 24px; }
+      .hero-brand { width: 98px; height: 64px; }
+      .hero-brand img { width: 158px; }
+      .hero-signal { display: none; }
+      .hero-orbit { width: 94px; height: 94px; right: -8px; }
+      .hero-orbit::after { inset: 33px; }
       .services-grid { grid-template-columns: 1fr; }
       .services-row2 { grid-template-columns: 1fr; }
       .works-grid { grid-template-columns: 1fr; }
@@ -728,7 +840,7 @@
         <img src="media/logo.png" alt="Very Good Graphics" style="height:44px;width:auto;display:block;">
       </a>
 
-      <nav>
+      <nav id="site-nav">
         <a href="#servicios">Servicios</a>
         <a href="#trabajos">Trabajos</a>
         <a href="#proceso">Proceso</a>
@@ -737,6 +849,7 @@
       </nav>
 
       <a href="#contacto" class="btn-cta-sm">Cotiza tu proyecto →</a>
+      <button class="menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="site-nav"><span></span></button>
     </div>
   </header>
 
@@ -779,21 +892,17 @@
           </div>
         </div>
 
-        <div class="hero-right">
-          <img src="media/logo.png" class="hero-logo-img" alt="Very Good Graphics">
-          <img
-            src="media/work-1.png"
-            class="hero-img"
-            alt="Very Good Graphics — producción creativa"
-            onerror="this.style.display='none'"
-          />
-          <div class="hero-badge">
-            <div class="hero-badge-dot"></div>
-            <div>
-              <span>Resultados reales</span>
-              <small>Desde branding hasta producción</small>
+        <div class="hero-right" aria-label="Estrategia, diseño y producción de Very Good Graphics">
+          <div class="hero-panel">
+            <img src="media/work-1.png" class="hero-photo" alt="Mesa de estrategia creativa de Very Good Graphics">
+            <div class="hero-panel-content">
+              <div class="hero-brand"><img src="media/logo.png" alt="Very Good Graphics"></div>
+              <h3>Ideas con propósito.<br><span>Diseño con impacto.</span></h3>
+              <div class="hero-pills"><span>Estrategia</span><span>Identidad</span><span>Contenido</span><span>Digital</span></div>
             </div>
           </div>
+          <div class="hero-orbit" aria-hidden="true"></div>
+          <div class="hero-signal"><b>De la idea al resultado</b>Un solo estudio, todo el sistema.</div>
         </div>
       </div>
     </section>
@@ -1116,13 +1225,13 @@
 
       <div class="footer-col">
         <h4>Servicios</h4>
-        <a href="#">Branding</a>
-        <a href="#">Diseño Gráfico</a>
-        <a href="#">Diseño Web</a>
-        <a href="#">Fotografía</a>
-        <a href="#">Video & Edición</a>
-        <a href="#">Dron</a>
-        <a href="#">Ilustración</a>
+        <a href="servicios/branding.html">Branding</a>
+        <a href="servicios/diseno-grafico.html">Diseño Gráfico</a>
+        <a href="servicios/diseno-web.html">Diseño Web</a>
+        <a href="servicios/fotografia.html">Fotografía</a>
+        <a href="servicios/video.html">Video & Edición</a>
+        <a href="servicios/dron.html">Dron</a>
+        <a href="servicios/ilustracion.html">Ilustración</a>
       </div>
 
       <div class="footer-col contact">
@@ -1148,5 +1257,22 @@
     </div>
   </footer>
 
+  <script>
+    const menuButton = document.querySelector('.menu-toggle');
+    const siteNav = document.getElementById('site-nav');
+    if (menuButton && siteNav) {
+      menuButton.addEventListener('click', () => {
+        const open = menuButton.getAttribute('aria-expanded') === 'true';
+        menuButton.setAttribute('aria-expanded', String(!open));
+        menuButton.setAttribute('aria-label', open ? 'Abrir menú' : 'Cerrar menú');
+        siteNav.classList.toggle('is-open', !open);
+      });
+      siteNav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+        menuButton.setAttribute('aria-expanded', 'false');
+        menuButton.setAttribute('aria-label', 'Abrir menú');
+        siteNav.classList.remove('is-open');
+      }));
+    }
+  </script>
 </body>
 </html>
