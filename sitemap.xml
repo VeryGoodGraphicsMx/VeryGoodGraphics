@@ -1,2 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://verygoodgraphics.mx/</loc><priority>1.0</priority></url><url><loc>https://verygoodgraphics.mx/blog.html</loc><priority>0.8</priority></url><url><loc>https://verygoodgraphics.mx/blog/cuanto-cuesta-branding-mexico.html</loc><priority>0.7</priority></url><url><loc>https://verygoodgraphics.mx/blog/landing-page-o-sitio-web.html</loc><priority>0.7</priority></url><url><loc>https://verygoodgraphics.mx/blog/como-preparar-brief-diseno.html</loc><priority>0.7</priority></url></urlset>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.verygoodgraphics.mx/</loc><priority>1.0</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/blog.html</loc><priority>0.8</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/blog/cuanto-cuesta-branding-mexico.html</loc><priority>0.7</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/blog/landing-page-o-sitio-web.html</loc><priority>0.7</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/blog/como-preparar-brief-diseno.html</loc><priority>0.7</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/servicios/branding.html</loc><priority>0.8</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/servicios/diseno-grafico.html</loc><priority>0.8</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/servicios/diseno-web.html</loc><priority>0.8</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/servicios/fotografia.html</loc><priority>0.8</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/servicios/video.html</loc><priority>0.8</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/servicios/dron.html</loc><priority>0.8</priority></url>
+  <url><loc>https://www.verygoodgraphics.mx/servicios/ilustracion.html</loc><priority>0.8</priority></url>
+</urlset>
