@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260801-5">
+  <link rel="stylesheet" href="styles.css?v=20260801-6">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
-  <script defer src="app.js?v=20260801-5"></script>
+  <script defer src="app.js?v=20260801-6"></script>
 </head>
 <body class="is-loading">
   <div class="ambient" aria-hidden="true"></div>
@@ -74,6 +74,9 @@
         <button class="nav-item" data-view="tasks"><span>✓</span>Tareas <em id="nav-task-count">0</em></button>
         <p>CONTROL</p>
         <button class="nav-item" data-view="finance"><span>$</span>Pagos y margen</button>
+        <button class="nav-item owner-only" data-view="team"><span>+</span>Equipo</button>
+        <button class="nav-item owner-only" data-view="forms"><span>▤</span>Formularios</button>
+        <button class="nav-item owner-only" data-view="assignment"><span>⇢</span>Repartición</button>
         <button class="nav-item owner-only" data-view="system"><span>⚙</span>Sistema</button>
       </nav>
 
@@ -149,6 +152,21 @@
           <article class="panel"><span class="status-dot standby"></span><h2>Automatización</h2><p>Confirmación al prospecto, aviso interno y tarea automática estarán disponibles después de conectar correo.</p><button class="button ghost" disabled>Segunda fase</button></article>
         </div>
       </section>
+
+      <section class="view" id="view-team">
+        <div class="page-head"><div><p class="eyebrow">ACCESOS</p><h1>Equipo</h1><p>Invita usuarios y controla su rol dentro del CRM.</p></div><button class="button primary" data-open="user-dialog">Invitar usuario</button></div>
+        <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Equipo</th><th>Estado</th></tr></thead><tbody id="team-list"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="view-forms">
+        <div class="page-head"><div><p class="eyebrow">CAPTACIÓN</p><h1>Formularios</h1><p>Crea formularios embebibles e identifica landing, campaña y fuente.</p></div><button class="button primary" data-open="form-dialog">Nuevo formulario</button></div>
+        <div class="admin-grid" id="forms-list"></div>
+      </section>
+
+      <section class="view" id="view-assignment">
+        <div class="page-head"><div><p class="eyebrow">DISTRIBUCIÓN</p><h1>Repartición</h1><p>Asigna automáticamente prospectos por formulario, servicio o campaña.</p></div><button class="button primary" data-open="assignment-dialog">Nueva regla</button></div>
+        <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>Prioridad</th><th>Regla</th><th>Condición</th><th>Responsable</th><th>Estado</th></tr></thead><tbody id="assignment-list"></tbody></table></div></div>
+      </section>
     </main>
   </div>
 
@@ -186,6 +204,24 @@
       <div class="form-grid"><label class="full">Tarea<input name="title" required></label><label>Fecha límite<input name="due_at" type="date" required></label><label>Prioridad<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label><label class="full">Relacionar con<select name="relation" id="task-relation"><option value="">General</option></select></label></div>
       <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Crear tarea</button></footer>
     </form>
+  </dialog>
+
+  <dialog id="user-dialog">
+    <form method="dialog" data-submit="invite-user"><header><div><p class="eyebrow">NUEVO ACCESO</p><h2>Invitar usuario</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><label>Nombre<input name="full_name" required></label><label>Correo<input name="email" type="email" required></label><label>Rol<select name="role"><option value="sales">Comercial</option><option value="production">Producción</option><option value="owner">Dirección</option></select></label><label>Equipo<select name="team"><option value="commercial">Comercial</option><option value="production">Producción</option><option value="direction">Dirección</option><option value="viewer">Consulta</option></select></label></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Enviar invitación</button></footer></form>
+  </dialog>
+
+  <dialog id="form-dialog">
+    <form method="dialog" data-submit="save-form"><header><div><p class="eyebrow">FORM BUILDER</p><h2>Nuevo formulario</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><label>Nombre<input name="name" required placeholder="Contacto corporativo"></label><label>ID para embeber<input name="slug" required pattern="[a-z0-9_-]{3,80}" placeholder="contacto-corporativo"></label><label>Campaña<input name="campaign"></label><label>Servicio<input name="service" placeholder="Branding"></label><label class="full">Dominios autorizados<textarea name="allowed_domains" rows="3" required placeholder="www.verygoodgraphics.mx&#10;landing.ejemplo.com"></textarea></label><label class="full">Descripción<textarea name="description" rows="2"></textarea></label><fieldset class="full field-picker"><legend>Campos</legend><label><input type="checkbox" name="field_names" value="phone" checked> Teléfono</label><label><input type="checkbox" name="field_names" value="company" checked> Empresa</label><label><input type="checkbox" name="field_names" value="service" checked> Servicio</label><label><input type="checkbox" name="field_names" value="budget_range" checked> Presupuesto</label><label><input type="checkbox" name="field_names" value="message" checked> Mensaje</label></fieldset><label>Responsable predeterminado<select name="default_owner_id" id="form-default-owner"></select></label><label class="toggle-label"><input type="checkbox" name="active" checked> Formulario activo</label></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Guardar formulario</button></footer></form>
+  </dialog>
+
+  <dialog id="assignment-dialog">
+    <form method="dialog" data-submit="save-assignment"><header><div><p class="eyebrow">REGLA AUTOMÁTICA</p><h2>Nueva regla</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><label>Nombre<input name="name" required></label><label>Prioridad<input name="priority" type="number" min="1" max="9999" value="100" required></label><label>Formulario<select name="form_id" id="rule-form"></select></label><label>Servicio<input name="service"></label><label>UTM source<input name="utm_source"></label><label>UTM campaign<input name="utm_campaign"></label><label class="full">La landing contiene<input name="landing_contains" placeholder="/servicios/branding"></label><label>Responsable<select name="assignee_id" id="rule-assignee" required></select></label><label class="toggle-label"><input type="checkbox" name="active" checked> Regla activa</label></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Guardar regla</button></footer></form>
   </dialog>
 
   <div class="toast" id="toast" role="status"></div>

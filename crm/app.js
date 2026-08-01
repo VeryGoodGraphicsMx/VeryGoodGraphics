@@ -18,6 +18,11 @@
   const ROLE_NAMES = { owner: 'Dirección', sales: 'Comercial', production: 'Producción' };
   const PRIORITY_NAMES = { low: 'Baja', normal: 'Normal', high: 'Alta', urgent: 'Urgente' };
   const PROPOSAL_NAMES = { draft: 'Borrador', approved: 'Aprobada internamente', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada' };
+  const FORM_FIELDS = {
+    phone: { name: 'phone', label: 'Teléfono', type: 'tel' }, company: { name: 'company', label: 'Empresa', type: 'text' },
+    service: { name: 'service', label: 'Servicio', type: 'text' }, budget_range: { name: 'budget_range', label: 'Presupuesto', type: 'text' },
+    message: { name: 'message', label: 'Mensaje', type: 'textarea' },
+  };
   const money = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
   const date = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
   const shortDate = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short' });
@@ -36,7 +41,7 @@
   function emptyState() {
     return {
       profile: null,
-      leads: [], clients: [], proposals: [], projects: [], tasks: [], payments: [], activities: [],
+      leads: [], clients: [], proposals: [], projects: [], tasks: [], payments: [], activities: [], profiles: [], forms: [], assignment_rules: [], form_submissions: [],
       system: { database: false, form: false, automation: false },
     };
   }
@@ -134,7 +139,7 @@
     bindEvents();
     fillFilters();
     if (demoMode) {
-      state = demoState();
+      state = { ...emptyState(), ...demoState() };
       $('#demo-banner').hidden = false;
       showApp();
       return;
@@ -225,6 +230,9 @@
     renderProjects();
     renderTasks();
     renderFinance();
+    renderTeam();
+    renderForms();
+    renderAssignment();
     fillRelations();
     $('#nav-lead-count').textContent = state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage)).length;
     $('#nav-task-count').textContent = state.tasks.filter((task) => task.status !== 'done').length;
@@ -351,12 +359,38 @@
     }).join('') : empty('Los márgenes aparecerán con los proyectos.');
   }
 
+  function renderTeam() {
+    const target = $('#team-list'); if (!target) return;
+    target.innerHTML = state.profiles.length ? state.profiles.map((profile) => `<tr><td><strong>${safe(profile.full_name || profile.email)}</strong><small>${safe(profile.email)}</small></td><td>${safe(ROLE_NAMES[profile.role] || profile.role)}</td><td>${safe(profile.team || '—')}</td><td><span class="tag ${profile.active ? 'green' : 'red'}">${profile.active ? 'Activo' : 'Inactivo'}</span></td></tr>`).join('') : `<tr><td colspan="4">${empty('Todavía no hay usuarios.')}</td></tr>`;
+  }
+
+  function renderForms() {
+    const target = $('#forms-list'); if (!target) return;
+    target.innerHTML = state.forms.length ? state.forms.map((form) => {
+      const snippet = `<div data-vgg-form="${form.slug}"></div><script async src="https://www.verygoodgraphics.mx/embed.js"><\/script>`;
+      return `<article class="panel admin-card"><header><div><p class="eyebrow">${safe(form.campaign || 'SIN CAMPAÑA')}</p><h2>${safe(form.name)}</h2></div><span class="tag ${form.active ? 'green' : 'red'}">${form.active ? 'Activo' : 'Inactivo'}</span></header><p>${safe(form.description || 'Formulario embebible con atribución completa.')}</p><dl><div><dt>ID</dt><dd>${safe(form.slug)}</dd></div><div><dt>Dominios</dt><dd>${safe((form.allowed_domains || []).join(', ') || 'Sin dominios')}</dd></div><div><dt>Envíos</dt><dd>${state.form_submissions.filter((item) => item.form_id === form.id).length}</dd></div></dl><code>${safe(snippet)}</code></article>`;
+    }).join('') : empty('Crea el primer formulario para una landing de VGG.');
+  }
+
+  function renderAssignment() {
+    const target = $('#assignment-list'); if (!target) return;
+    target.innerHTML = state.assignment_rules.length ? state.assignment_rules.map((rule) => {
+      const conditions = [rule.form_id && `Formulario: ${state.forms.find((item) => item.id === rule.form_id)?.name || rule.form_id}`, rule.service && `Servicio: ${rule.service}`, rule.utm_source && `Fuente: ${rule.utm_source}`, rule.utm_campaign && `Campaña: ${rule.utm_campaign}`, rule.landing_contains && `Landing: ${rule.landing_contains}`].filter(Boolean).join(' · ') || 'Todos los prospectos';
+      const owner = state.profiles.find((item) => item.id === rule.assignee_id);
+      return `<tr><td>${Number(rule.priority)}</td><td><strong>${safe(rule.name)}</strong></td><td>${safe(conditions)}</td><td>${safe(owner?.full_name || owner?.email || 'Sin responsable')}</td><td><span class="tag ${rule.active ? 'green' : 'red'}">${rule.active ? 'Activa' : 'Inactiva'}</span></td></tr>`;
+    }).join('') : `<tr><td colspan="5">${empty('No hay reglas automáticas todavía.')}</td></tr>`;
+  }
+
   function renderLeadDetail(leadId) {
     const lead = leadById(leadId);
     if (!lead) return closeDrawer();
     selectedLeadId = leadId;
     const activities = state.activities.filter((activity) => activity.lead_id === leadId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const owners = state.profiles.filter((item) => item.active && ['owner', 'sales'].includes(item.role));
+    const attribution = [lead.utm_source && `utm_source=${lead.utm_source}`, lead.utm_campaign && `utm_campaign=${lead.utm_campaign}`, lead.landing_url].filter(Boolean).join(' · ');
     $('#lead-detail').innerHTML = `<section class="lead-hero"><p class="eyebrow">${safe(stageName(lead.stage))}</p><h2>${safe(lead.company || lead.contact_name)}</h2><p>${safe(lead.contact_name)} · ${safe(lead.email)}${lead.phone ? ` · ${safe(lead.phone)}` : ''}</p></section><div class="lead-meta"><div><small>SERVICIO</small><b>${safe(lead.service || 'Por definir')}</b></div><div><small>PRESUPUESTO</small><b>${safe(lead.budget_range || 'Sin definir')}</b></div><div><small>ORIGEN</small><b>${safe(lead.source || 'Manual')}</b></div><div><small>SCORE</small><b>${Number(lead.score || 0)} / 100</b></div></div><p>${safe(lead.message || 'Sin contexto registrado.')}</p><div class="drawer-actions">${STAGES.map(([stage, label]) => `<button class="button ${lead.stage === stage ? 'primary' : 'ghost'}" data-change-stage="${stage}" ${lead.stage === stage ? 'disabled' : ''}>${safe(label)}</button>`).join('')}</div><div class="timeline"><p class="eyebrow">HISTORIAL</p>${activities.length ? activities.map((activity) => `<article class="timeline-item"><b>${safe(activity.kind === 'stage_change' ? 'Cambio de etapa' : activity.kind === 'proposal' ? 'Propuesta' : 'Nota')}</b><p>${safe(activity.body)}</p><time>${fmtDate(activity.created_at)}</time></article>`).join('') : empty('Aún no hay actividad registrada.')}</div>`;
+    if (state.profile?.role === 'owner') $('#lead-detail').insertAdjacentHTML('beforeend', `<div class="assignment-box"><label>Responsable<select data-assign-lead="${safe(lead.id)}"><option value="">Sin asignar</option>${owners.map((owner) => `<option value="${safe(owner.id)}" ${lead.owner_id === owner.id ? 'selected' : ''}>${safe(owner.full_name || owner.email)}</option>`).join('')}</select></label></div>`);
+    if (attribution) $('#lead-detail').insertAdjacentHTML('beforeend', `<div class="attribution-box"><p class="eyebrow">ATRIBUCIÓN</p><p>${safe(attribution)}</p></div>`);
     $('#lead-drawer').classList.add('open');
     $('#lead-drawer').setAttribute('aria-hidden', 'false');
     $('#scrim').classList.add('open');
@@ -375,6 +409,11 @@
     $('#proposal-lead').innerHTML = '<option value="">Selecciona</option>' + state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage)).map((lead) => `<option value="${safe(lead.id)}">${safe(lead.company || lead.contact_name)} · ${safe(lead.service || 'Por definir')}</option>`).join('');
     $('#project-client').innerHTML = '<option value="">Selecciona</option>' + state.clients.map((client) => `<option value="${safe(client.id)}">${safe(client.name)}</option>`).join('');
     $('#task-relation').innerHTML = '<option value="">General</option><optgroup label="Prospectos">' + state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage)).map((lead) => `<option value="lead:${safe(lead.id)}">${safe(lead.company || lead.contact_name)}</option>`).join('') + '</optgroup><optgroup label="Proyectos">' + state.projects.map((project) => `<option value="project:${safe(project.id)}">${safe(project.name)}</option>`).join('') + '</optgroup>';
+    const owners = state.profiles.filter((profile) => profile.active && ['owner', 'sales'].includes(profile.role));
+    const ownerOptions = '<option value="">Sin responsable predeterminado</option>' + owners.map((profile) => `<option value="${safe(profile.id)}">${safe(profile.full_name || profile.email)}</option>`).join('');
+    if ($('#form-default-owner')) $('#form-default-owner').innerHTML = ownerOptions;
+    if ($('#rule-assignee')) $('#rule-assignee').innerHTML = owners.map((profile) => `<option value="${safe(profile.id)}">${safe(profile.full_name || profile.email)}</option>`).join('');
+    if ($('#rule-form')) $('#rule-form').innerHTML = '<option value="">Cualquier formulario</option>' + state.forms.map((form) => `<option value="${safe(form.id)}">${safe(form.name)}</option>`).join('');
   }
 
   function priorityTone(priority) {
@@ -437,6 +476,15 @@
       const [relationType, relationId] = String(values.relation || '').split(':');
       const task = { title: values.title, due_at: values.due_at, priority: values.priority, ...(relationType === 'lead' ? { lead_id: relationId } : relationType === 'project' ? { project_id: relationId } : {}) };
       await mutate('create_task', task, () => state.tasks.unshift({ id: id(), ...task, status: 'pending' }));
+    } else if (submit === 'invite-user') {
+      await mutate('invite_user', values);
+    } else if (submit === 'save-form') {
+      const optional = $$('[name="field_names"]:checked', form).map((input) => ({ ...FORM_FIELDS[input.value] }));
+      const payload = { ...values, active: form.elements.active.checked, fields: [{ name: 'contact_name', label: 'Nombre', type: 'text', required: true }, { name: 'email', label: 'Correo', type: 'email', required: true }, ...optional] };
+      delete payload.field_names;
+      await mutate('save_form', payload);
+    } else if (submit === 'save-assignment') {
+      await mutate('save_assignment_rule', { ...values, active: form.elements.active.checked, priority: Number(values.priority) });
     }
     form.closest('dialog').close();
     form.reset();
@@ -472,6 +520,12 @@
         if (!proposal) return;
         return mutate('approve_proposal', { proposal_id: proposal.id }, () => { proposal.status = 'approved'; });
       }
+    });
+
+    document.addEventListener('change', async (event) => {
+      const assignment = event.target.closest('[data-assign-lead]');
+      if (!assignment) return;
+      await mutate('assign_lead', { lead_id: assignment.dataset.assignLead, owner_id: assignment.value || null });
     });
 
     $$('form[data-submit]').forEach((form) => form.addEventListener('submit', async (event) => {

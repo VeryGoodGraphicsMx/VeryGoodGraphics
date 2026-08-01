@@ -28,8 +28,9 @@ function requestOrigin(event) {
 function corsHeaders(event) {
   const origin = requestOrigin(event);
   const allowed = allowedOrigins();
+  const publicFormEndpoint = /(?:vgg-form-config|vgg-lead-intake|vgg-crm\/intake)/.test(String(event.path || event.rawUrl || ''));
   return {
-    'Access-Control-Allow-Origin': allowed.includes(origin) ? origin : allowed[0],
+    'Access-Control-Allow-Origin': (publicFormEndpoint && /^https?:\/\//.test(origin)) || allowed.includes(origin) ? origin : allowed[0],
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Max-Age': '86400',
@@ -187,5 +188,5 @@ function errorResponse(event, error) {
 
 module.exports = {
   getEnvironment, allowedOrigins, requestOrigin, response, handleOptions, assertMethod, parseBody,
-  authenticate, select, insert, update, cleanText, cleanEmail, cleanNumber, cleanId, errorResponse,
+  authenticate, supabaseFetch, select, insert, update, cleanText, cleanEmail, cleanNumber, cleanId, errorResponse,
 };
