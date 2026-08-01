@@ -1,7 +1,7 @@
 'use strict';
 
 const {
-  allowedOrigins, requestOrigin, response, handleOptions, assertMethod, parseBody, insert,
+  allowedOrigins, requestOrigin, response, handleOptions, assertMethod, parseBody, select, insert,
   cleanText, cleanEmail, errorResponse,
 } = require('./_vgg-crm-common');
 
@@ -42,6 +42,14 @@ function scoreLead(body) {
   return Math.min(100, score);
 }
 
+function host(value) { try { return new URL(value).hostname.toLowerCase(); } catch (_) { return ''; } }
+function matches(rule, form, body, tracking) {
+  return (!rule.form_id || rule.form_id === form?.id) && (!rule.service || rule.service === body.service) &&
+    (!rule.utm_source || rule.utm_source.toLowerCase() === String(tracking.utm_source || '').toLowerCase()) &&
+    (!rule.utm_campaign || rule.utm_campaign.toLowerCase() === String(tracking.utm_campaign || '').toLowerCase()) &&
+    (!rule.landing_contains || String(tracking.page_url || '').includes(rule.landing_contains));
+}
+
 exports.handler = async (event) => {
   const options = handleOptions(event);
   if (options) return options;
@@ -52,13 +60,26 @@ exports.handler = async (event) => {
       error.statusCode = 503;
       throw error;
     }
-    validateOrigin(event);
     if (Number(event.headers?.['content-length'] || 0) > 25000) {
       const error = new Error('La solicitud es demasiado grande.');
       error.statusCode = 413;
       throw error;
     }
-    const body = parseBody(event);
+    const request = parseBody(event);
+    const fields = request.fields && typeof request.fields === 'object' ? request.fields : request;
+    const tracking = request.tracking && typeof request.tracking === 'object' ? request.tracking : request;
+    let form = null;
+    if (request.form_key || request.form_id) {
+      const key = cleanText(request.form_key || request.form_id, 80);
+      [form] = await select('crm_forms', `slug=eq.${encodeURIComponent(key)}&active=is.true&select=*`);
+      if (!form) { const error = new Error('Formulario no disponible.'); error.statusCode = 404; throw error; }
+      const domain = host(tracking.page_url) || requestOrigin(event).replace(/^https?:\/\//, '');
+      if (!form.allowed_domains.includes(domain)) { const error = new Error('Dominio no autorizado para este formulario.'); error.statusCode = 403; throw error; }
+      for (const definition of form.fields || []) if (definition.required && !cleanText(fields[definition.name], 3000)) {
+        const error = new Error(`${definition.label || definition.name} es obligatorio.`); error.statusCode = 400; throw error;
+      }
+    } else validateOrigin(event);
+    const body = { ...fields, service: fields.service || form?.service };
     if (cleanText(body.website || body.company_url, 200)) return response(event, 202, { ok: true });
     const service = required(body.service, 'El servicio', 100);
     if (!SERVICES.includes(service)) {
@@ -67,7 +88,9 @@ exports.handler = async (event) => {
       throw error;
     }
     const score = scoreLead(body);
-    const ownerId = cleanText(process.env.VGG_CRM_DEFAULT_OWNER_ID, 64) || null;
+    const rules = await select('crm_assignment_rules', 'active=is.true&select=*&order=priority.asc');
+    const rule = rules.find((item) => matches(item, form, body, tracking));
+    const ownerId = rule?.assignee_id || form?.default_owner_id || cleanText(process.env.VGG_CRM_DEFAULT_OWNER_ID, 64) || null;
     const row = {
       contact_name: required(body.contact_name, 'El nombre', 160),
       email: cleanEmail(required(body.email, 'El correo', 254)),
@@ -78,10 +101,17 @@ exports.handler = async (event) => {
       message: cleanText(body.message, 3000) || null,
       source: cleanText(body.source, 80) || 'Sitio web',
       source_detail: cleanText(body.source_detail, 240) || null,
-      utm_source: cleanText(body.utm_source, 120) || null,
-      utm_medium: cleanText(body.utm_medium, 120) || null,
-      utm_campaign: cleanText(body.utm_campaign, 180) || null,
-      landing_path: cleanText(body.landing_path, 300) || null,
+      utm_source: cleanText(tracking.utm_source || body.utm_source, 120) || null,
+      utm_medium: cleanText(tracking.utm_medium || body.utm_medium, 120) || null,
+      utm_campaign: cleanText(tracking.utm_campaign || body.utm_campaign, 180) || form?.campaign || null,
+      utm_content: cleanText(tracking.utm_content, 180) || null,
+      utm_term: cleanText(tracking.utm_term, 180) || null,
+      click_id: cleanText(tracking.gclid || tracking.fbclid, 240) || null,
+      landing_path: cleanText(body.landing_path || tracking.page_url, 300) || null,
+      landing_url: cleanText(tracking.page_url, 1000) || null,
+      referrer_url: cleanText(tracking.referrer, 1000) || null,
+      form_id: form?.id || null,
+      assignment_rule_id: rule?.id || null,
       stage: 'new',
       score,
       priority: score >= 75 ? 'urgent' : score >= 60 ? 'high' : 'normal',
@@ -91,9 +121,15 @@ exports.handler = async (event) => {
     const [lead] = await insert('crm_leads', row);
     await insert('crm_form_submissions', {
       lead_id: lead.id,
-      form_name: cleanText(body.form_name, 120) || 'contacto-vgg',
+      form_id: form?.id || null,
+      form_name: form?.name || cleanText(body.form_name, 120) || 'contacto-vgg',
       page_path: row.landing_path,
-      payload: { service: row.service, budget_range: row.budget_range, utm_source: row.utm_source, utm_medium: row.utm_medium, utm_campaign: row.utm_campaign },
+      visitor_id: cleanText(tracking.visitor_id, 120) || null, session_id: cleanText(tracking.session_id, 120) || null,
+      page_url: row.landing_url, page_title: cleanText(tracking.page_title, 300) || null, referrer_url: row.referrer_url,
+      domain: host(tracking.page_url) || null, user_agent: cleanText(event.headers?.['user-agent'], 500) || null,
+      utm_source: cleanText(tracking.utm_source, 120) || null, utm_medium: cleanText(tracking.utm_medium, 120) || null,
+      utm_campaign: cleanText(tracking.utm_campaign, 180) || null, utm_content: cleanText(tracking.utm_content, 180) || null, utm_term: cleanText(tracking.utm_term, 180) || null,
+      payload: fields,
     });
     await insert('crm_activities', { lead_id: lead.id, kind: 'created', body: `Prospecto recibido desde ${row.source}.`, created_by: null });
     await insert('crm_tasks', {

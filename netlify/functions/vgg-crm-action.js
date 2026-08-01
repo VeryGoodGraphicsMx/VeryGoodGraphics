@@ -1,13 +1,19 @@
 'use strict';
 
 const {
-  response, handleOptions, assertMethod, parseBody, authenticate, select, insert, update,
+  response, handleOptions, assertMethod, parseBody, authenticate, supabaseFetch, select, insert, update,
   cleanText, cleanEmail, cleanNumber, cleanId, errorResponse,
 } = require('./_vgg-crm-common');
 
 const LEAD_STAGES = ['new', 'contacted', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
 const TASK_STATUSES = ['pending', 'done', 'cancelled'];
 const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
+const ROLES = ['owner', 'sales', 'production'];
+const TEAMS = ['direction', 'commercial', 'production', 'viewer'];
+
+function cleanBoolean(value) {
+  return value === true || value === 1 || value === 'true' || value === 'on';
+}
 
 function requireValue(value, label, max = 300) {
   const result = cleanText(value, max);
@@ -176,6 +182,73 @@ async function markPaymentPaid(payload, profile) {
   return { message: 'Pago confirmado.', record };
 }
 
+function cleanSlug(value) {
+  const slug = cleanText(value, 80).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+  if (!/^[a-z0-9][a-z0-9_-]{2,79}$/.test(slug)) {
+    const error = new Error('El identificador del formulario no es válido.'); error.statusCode = 400; throw error;
+  }
+  return slug;
+}
+
+async function inviteUser(payload, profile) {
+  const email = cleanEmail(requireValue(payload.email, 'El correo', 254));
+  const role = assertChoice(payload.role || 'sales', ROLES, 'El rol');
+  const team = assertChoice(payload.team || (role === 'production' ? 'production' : 'commercial'), TEAMS, 'El equipo');
+  const redirect = encodeURIComponent('https://www.verygoodgraphics.mx/crm/');
+  const user = await supabaseFetch(`/auth/v1/invite?redirect_to=${redirect}`, { method: 'POST', body: JSON.stringify({ email, data: { full_name: requireValue(payload.full_name, 'El nombre', 160) } }) });
+  const [record] = await insert('crm_profiles', { id: user.id, email, full_name: requireValue(payload.full_name, 'El nombre', 160), role, team, active: true });
+  return { message: 'Invitación enviada y usuario agregado al equipo.', record };
+}
+
+async function updateProfile(payload) {
+  const changes = {
+    role: assertChoice(payload.role, ROLES, 'El rol'),
+    team: assertChoice(payload.team, TEAMS, 'El equipo'),
+    active: cleanBoolean(payload.active),
+  };
+  return { message: 'Usuario actualizado.', record: await mustUpdate('crm_profiles', cleanId(payload.profile_id), changes) };
+}
+
+async function assignLead(payload, profile) {
+  const leadId = cleanId(payload.lead_id);
+  const ownerId = payload.owner_id ? cleanId(payload.owner_id) : null;
+  if (ownerId) {
+    const [owner] = await select('crm_profiles', `id=eq.${encodeURIComponent(ownerId)}&active=is.true&select=id,full_name`);
+    if (!owner) { const error = new Error('El responsable no está activo.'); error.statusCode = 400; throw error; }
+  }
+  const record = await mustUpdate('crm_leads', leadId, { owner_id: ownerId });
+  await insert('crm_activities', { lead_id: leadId, kind: 'assignment', body: ownerId ? 'Responsable actualizado por Dirección.' : 'Prospecto dejado sin asignar.', created_by: profile.id });
+  return { message: ownerId ? 'Prospecto asignado.' : 'Prospecto sin asignar.', record };
+}
+
+async function saveForm(payload, profile) {
+  const fields = Array.isArray(payload.fields) ? payload.fields : [];
+  if (!fields.length) { const error = new Error('Agrega al menos un campo.'); error.statusCode = 400; throw error; }
+  const row = {
+    slug: cleanSlug(payload.slug || payload.name), name: requireValue(payload.name, 'El nombre', 160),
+    description: cleanText(payload.description, 500) || null, campaign: cleanText(payload.campaign, 180) || null,
+    service: cleanText(payload.service, 120) || null, active: cleanBoolean(payload.active),
+    allowed_domains: String(payload.allowed_domains || '').split(/[\n,]+/).map((v) => cleanText(v, 180).replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase()).filter(Boolean),
+    fields, submit_label: cleanText(payload.submit_label, 80) || 'Enviar solicitud',
+    success_message: cleanText(payload.success_message, 300) || 'Gracias. Recibimos tu solicitud.',
+    privacy_url: cleanText(payload.privacy_url, 500) || null,
+    default_owner_id: payload.default_owner_id ? cleanId(payload.default_owner_id) : null,
+  };
+  const record = payload.form_id ? await mustUpdate('crm_forms', cleanId(payload.form_id), row) : (await insert('crm_forms', { ...row, created_by: profile.id }))[0];
+  return { message: 'Formulario guardado.', record };
+}
+
+async function saveAssignmentRule(payload, profile) {
+  const row = {
+    name: requireValue(payload.name, 'El nombre', 160), priority: cleanNumber(payload.priority || 100, 1, 9999), active: cleanBoolean(payload.active),
+    form_id: payload.form_id ? cleanId(payload.form_id) : null, service: cleanText(payload.service, 120) || null,
+    utm_source: cleanText(payload.utm_source, 120) || null, utm_campaign: cleanText(payload.utm_campaign, 180) || null,
+    landing_contains: cleanText(payload.landing_contains, 300) || null, assignee_id: cleanId(payload.assignee_id),
+  };
+  const record = payload.rule_id ? await mustUpdate('crm_assignment_rules', cleanId(payload.rule_id), row) : (await insert('crm_assignment_rules', { ...row, created_by: profile.id }))[0];
+  return { message: 'Regla de asignación guardada.', record };
+}
+
 const ACTIONS = {
   create_lead: { roles: ['owner', 'sales'], run: createLead },
   change_stage: { roles: ['owner', 'sales'], run: changeStage },
@@ -186,6 +259,11 @@ const ACTIONS = {
   save_project: { roles: ['owner'], run: saveProject },
   save_payment: { roles: ['owner'], run: savePayment },
   mark_payment_paid: { roles: ['owner'], run: markPaymentPaid },
+  invite_user: { roles: ['owner'], run: inviteUser },
+  update_profile: { roles: ['owner'], run: updateProfile },
+  assign_lead: { roles: ['owner'], run: assignLead },
+  save_form: { roles: ['owner'], run: saveForm },
+  save_assignment_rule: { roles: ['owner'], run: saveAssignmentRule },
 };
 
 exports.handler = async (event) => {
