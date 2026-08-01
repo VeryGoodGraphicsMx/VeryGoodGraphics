@@ -23,3 +23,7 @@ Se automatizan captura, scoring, atribución, recordatorios, tareas y borradores
 ## 2026-08-01 — Migración gradual del formulario
 
 Netlify Forms permanece activo como respaldo. El nuevo endpoint solo se activa después de probar la escritura, notificación y recuperación del lead en el CRM de producción.
+
+## 2026-08-01 — Recuperación de contraseña con reautenticación obligatoria
+
+Una sesión temporal creada por un enlace de recuperación nunca puede abrir el CRM. El frontend exige el estado `PASSWORD_RECOVERY`, una contraseña nueva y confirmada, cierra todas las sesiones después del cambio y obliga a iniciar sesión nuevamente. Cada enlace es de un solo uso; solicitar uno nuevo invalida los anteriores y el botón de reenvío aplica un enfriamiento de 60 segundos.

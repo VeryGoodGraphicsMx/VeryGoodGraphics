@@ -29,10 +29,18 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const demoMode = new URLSearchParams(location.search).get('demo') === '1';
+  const authSearch = new URLSearchParams(location.search);
+  const authHash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const recoveryCallback = authSearch.get('type') === 'recovery' || authHash.get('type') === 'recovery';
+  const recoveryRequested = authSearch.get('recovery') === '1';
+  const recoveryError = authSearch.get('error_description') || authHash.get('error_description') || '';
+  const FORCE_REAUTH_KEY = 'vgg_crm_force_reauthentication';
 
   let client = null;
   let accessToken = '';
-  let recoveryMode = /(?:^|[&#?])type=recovery(?:&|$)/.test(`${location.search}${location.hash}`);
+  let recoveryMode = recoveryCallback || recoveryRequested;
+  let recoverySessionReady = recoveryCallback;
+  let resetCooldownTimer = null;
   let currentView = 'dashboard';
   let selectedLeadId = null;
   let toastTimer = null;
@@ -152,16 +160,31 @@
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
       });
       client.auth.onAuthStateChange((event, sessionValue) => {
-        if (event === 'SIGNED_OUT') return showAuth();
+        if (event === 'SIGNED_OUT') {
+          accessToken = '';
+          if (!recoveryMode) showAuth();
+          return;
+        }
         if (sessionValue?.access_token) accessToken = sessionValue.access_token;
         if (event === 'PASSWORD_RECOVERY') {
           recoveryMode = true;
+          recoverySessionReady = Boolean(sessionValue?.access_token);
           showPasswordRecovery();
         }
       });
       const { data: { session } } = await client.auth.getSession();
-      if (recoveryMode) {
-        if (!session) throw new Error('El enlace de recuperación expiró o ya fue utilizado. Solicita uno nuevo.');
+      if (localStorage.getItem(FORCE_REAUTH_KEY) === '1' && !recoveryMode) {
+        await client.auth.signOut({ scope: 'local' });
+        accessToken = '';
+        showAuth('Inicia sesión con tu nueva contraseña para continuar.');
+      } else if (recoveryMode) {
+        if (recoveryError || !session || !recoverySessionReady) {
+          await client.auth.signOut({ scope: 'local' });
+          recoveryMode = false;
+          recoverySessionReady = false;
+          history.replaceState(null, '', location.pathname);
+          throw new Error('El enlace de recuperación expiró, ya fue utilizado o dejó de ser válido al solicitar otro. Solicita uno nuevo y abre únicamente el correo más reciente.');
+        }
         accessToken = session.access_token;
         showPasswordRecovery();
       } else if (session) {
@@ -201,6 +224,11 @@
   }
 
   function showApp() {
+    if (localStorage.getItem(FORCE_REAUTH_KEY) === '1') return showAuth('Inicia sesión con tu nueva contraseña para continuar.');
+    if (recoveryMode) {
+      if (recoverySessionReady) return showPasswordRecovery();
+      return showAuth('Completa la recuperación de contraseña antes de entrar al CRM.');
+    }
     document.body.classList.remove('is-loading');
     $('#auth-shell').hidden = true;
     $('#app-shell').hidden = false;
@@ -620,6 +648,7 @@
     try {
       const { data, error } = await client.auth.signInWithPassword({ email: $('#login-email').value.trim(), password: $('#login-password').value });
       if (error) throw error;
+      localStorage.removeItem(FORCE_REAUTH_KEY);
       accessToken = data.session.access_token;
       await loadData();
       showApp();
@@ -630,10 +659,43 @@
 
   async function resetPassword() {
     const email = $('#login-email').value.trim();
+    const button = $('#reset-password');
     if (!client) return $('#auth-message').textContent = 'La recuperación estará disponible al conectar Supabase VGG.';
     if (!email) return $('#auth-message').textContent = 'Escribe tu correo primero.';
-    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/crm/` });
-    $('#auth-message').textContent = error ? error.message : 'Revisa tu correo para recuperar el acceso.';
+    if (button.disabled) return;
+    button.disabled = true;
+    $('#auth-message').textContent = 'Enviando enlace seguro…';
+    try {
+      const redirectUrl = new URL('/crm/', location.origin);
+      redirectUrl.searchParams.set('recovery', '1');
+      const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl.toString() });
+      if (error) throw error;
+      $('#auth-message').textContent = 'Revisa tu correo y abre únicamente el mensaje más reciente. Cada enlace es de un solo uso y uno nuevo invalida los anteriores.';
+      startResetCooldown(button, 60);
+    } catch (error) {
+      button.disabled = false;
+      $('#auth-message').textContent = error?.status === 429
+        ? 'Espera un minuto antes de solicitar otro enlace. Después usa únicamente el correo más reciente.'
+        : (error.message || 'No fue posible enviar el enlace de recuperación.');
+    }
+  }
+
+  function startResetCooldown(button, seconds) {
+    clearInterval(resetCooldownTimer);
+    const original = button.textContent;
+    let remaining = seconds;
+    button.textContent = `Reenviar en ${remaining} s`;
+    resetCooldownTimer = setInterval(() => {
+      remaining -= 1;
+      if (remaining > 0) {
+        button.textContent = `Reenviar en ${remaining} s`;
+        return;
+      }
+      clearInterval(resetCooldownTimer);
+      resetCooldownTimer = null;
+      button.textContent = original;
+      button.disabled = false;
+    }, 1000);
   }
 
   async function saveRecoveredPassword(event) {
@@ -643,7 +705,7 @@
     const confirmation = $('#confirm-password').value;
     const message = $('#password-recovery-message');
     message.textContent = '';
-    if (!client || !recoveryMode) return showAuth('El enlace de recuperación expiró o no es válido. Solicita uno nuevo.');
+    if (!client || !recoveryMode || !recoverySessionReady) return showAuth('El enlace de recuperación expiró o no es válido. Solicita uno nuevo.');
     if (password.length < 12) return message.textContent = 'La contraseña debe tener al menos 12 caracteres.';
     if (password !== confirmation) return message.textContent = 'Las contraseñas no coinciden.';
     button.disabled = true;
@@ -652,15 +714,17 @@
       if (error) throw error;
       if (!data.user) throw new Error('Supabase no confirmó el cambio de contraseña.');
       recoveryMode = false;
+      recoverySessionReady = false;
+      localStorage.setItem(FORCE_REAUTH_KEY, '1');
       history.replaceState(null, '', location.pathname);
-      const { data: { session } } = await client.auth.getSession();
-      if (!session) throw new Error('La contraseña cambió, pero la sesión expiró. Inicia sesión con tu nueva contraseña.');
-      accessToken = session.access_token;
+      const { error: signOutError } = await client.auth.signOut({ scope: 'global' });
+      if (signOutError) await client.auth.signOut({ scope: 'local' });
+      accessToken = '';
+      state = emptyState();
       $('#new-password').value = '';
       $('#confirm-password').value = '';
-      await loadData();
-      showApp();
-      toast('Contraseña actualizada correctamente.');
+      $('#login-password').value = '';
+      showAuth('Contraseña actualizada. Por seguridad, todas las sesiones se cerraron; inicia sesión con la nueva contraseña.');
     } catch (error) {
       message.textContent = error.message || 'No fue posible actualizar la contraseña.';
     } finally {
