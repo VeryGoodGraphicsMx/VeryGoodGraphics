@@ -1,0 +1,526 @@
+(() => {
+  'use strict';
+
+  const STAGES = [
+    ['new', 'Nuevo'],
+    ['contacted', 'Contactado'],
+    ['qualified', 'Calificado'],
+    ['proposal', 'Propuesta'],
+    ['negotiation', 'Negociación'],
+    ['won', 'Ganado'],
+  ];
+  const PROJECT_STAGES = [
+    ['kickoff', 'Kickoff'],
+    ['production', 'Producción'],
+    ['review', 'Revisión'],
+    ['delivery', 'Entrega'],
+  ];
+  const ROLE_NAMES = { owner: 'Dirección', sales: 'Comercial', production: 'Producción' };
+  const PRIORITY_NAMES = { low: 'Baja', normal: 'Normal', high: 'Alta', urgent: 'Urgente' };
+  const PROPOSAL_NAMES = { draft: 'Borrador', approved: 'Aprobada internamente', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada' };
+  const money = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+  const date = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  const shortDate = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short' });
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const demoMode = new URLSearchParams(location.search).get('demo') === '1';
+
+  let client = null;
+  let accessToken = '';
+  let currentView = 'dashboard';
+  let selectedLeadId = null;
+  let toastTimer = null;
+  let state = emptyState();
+
+  function emptyState() {
+    return {
+      profile: null,
+      leads: [], clients: [], proposals: [], projects: [], tasks: [], payments: [], activities: [],
+      system: { database: false, form: false, automation: false },
+    };
+  }
+
+  function demoState() {
+    const now = new Date();
+    const isoDays = (offset) => new Date(now.getTime() + offset * 86400000).toISOString();
+    return {
+      profile: { id: 'demo-owner', full_name: 'Juan Palao', role: 'owner', email: 'direccion@verygoodgraphics.mx' },
+      leads: [
+        { id: 'lead-1', contact_name: 'Mariana Torres', company: 'Nébula Café', email: 'mariana@ejemplo.mx', phone: '55 0000 1001', service: 'Branding', budget_range: '$35,000–$75,000 MXN', stage: 'negotiation', priority: 'urgent', score: 91, source: 'Sitio web', message: 'Nueva marca de café y empaque para lanzamiento nacional.', created_at: isoDays(-7), next_action_at: isoDays(0) },
+        { id: 'lead-2', contact_name: 'Eduardo Peña', company: 'Atlas Legal', email: 'eduardo@ejemplo.mx', phone: '55 0000 1002', service: 'Diseño web', budget_range: '$35,000–$75,000 MXN', stage: 'proposal', priority: 'high', score: 84, source: 'Referido', message: 'Sitio institucional con contenido y captación de prospectos.', created_at: isoDays(-5), next_action_at: isoDays(1) },
+        { id: 'lead-3', contact_name: 'Sofía Mendoza', company: 'Casa Lumen', email: 'sofia@ejemplo.mx', phone: '55 0000 1003', service: 'Fotografía', budget_range: '$15,000–$35,000 MXN', stage: 'qualified', priority: 'high', score: 77, source: 'Instagram', message: 'Fotografía para catálogo de temporada.', created_at: isoDays(-3), next_action_at: isoDays(2) },
+        { id: 'lead-4', contact_name: 'Andrés Villar', company: 'Estudio Norte', email: 'andres@ejemplo.mx', phone: '55 0000 1004', service: 'Video', budget_range: '$15,000–$35,000 MXN', stage: 'contacted', priority: 'normal', score: 66, source: 'Sitio web', message: 'Video corto de presentación del despacho.', created_at: isoDays(-2), next_action_at: isoDays(0) },
+        { id: 'lead-5', contact_name: 'Paola Ríos', company: 'Taller Origen', email: 'paola@ejemplo.mx', phone: '', service: 'Diseño gráfico', budget_range: '$5,000–$15,000 MXN', stage: 'new', priority: 'normal', score: 48, source: 'Cotizador', message: 'Piezas mensuales para redes.', created_at: isoDays(-1), next_action_at: isoDays(0) },
+        { id: 'lead-6', contact_name: 'Carlos Suárez', company: 'Ruta Viva', email: 'carlos@ejemplo.mx', phone: '55 0000 1006', service: 'Dron', budget_range: 'Más de $75,000 MXN', stage: 'won', priority: 'high', score: 96, source: 'Referido', message: 'Producción audiovisual para campaña turística.', created_at: isoDays(-22), next_action_at: null },
+      ],
+      clients: [
+        { id: 'client-1', name: 'Ruta Viva', contact_name: 'Carlos Suárez', email: 'carlos@ejemplo.mx' },
+        { id: 'client-2', name: 'Museo Horizonte', contact_name: 'Elena Cruz', email: 'elena@ejemplo.mx' },
+        { id: 'client-3', name: 'Aflora', contact_name: 'Daniel Soto', email: 'daniel@ejemplo.mx' },
+      ],
+      proposals: [
+        { id: 'proposal-1', lead_id: 'lead-1', title: 'Identidad y lanzamiento Nébula', amount_mxn: 68000, estimated_cost_mxn: 28000, margin_percent: 58.8, status: 'draft', scope: 'Estrategia, identidad, empaque base y guía de lanzamiento.', created_at: isoDays(-2) },
+        { id: 'proposal-2', lead_id: 'lead-2', title: 'Portal comercial Atlas', amount_mxn: 52000, estimated_cost_mxn: 22500, margin_percent: 56.7, status: 'approved', scope: 'Arquitectura, UI, desarrollo y configuración de medición.', created_at: isoDays(-3) },
+        { id: 'proposal-3', lead_id: 'lead-3', title: 'Catálogo Casa Lumen', amount_mxn: 24000, estimated_cost_mxn: 13800, margin_percent: 42.5, status: 'draft', scope: 'Producción de dos jornadas y edición de 60 fotografías.', created_at: isoDays(-1) },
+      ],
+      projects: [
+        { id: 'project-1', client_id: 'client-1', name: 'Campaña Ruta Viva', service: 'Video + dron', status: 'production', progress: 58, due_date: isoDays(16), budget_mxn: 96000, cost_mxn: 39000, spent_mxn: 23100 },
+        { id: 'project-2', client_id: 'client-2', name: 'Temporada Horizonte', service: 'Diseño gráfico', status: 'review', progress: 78, due_date: isoDays(8), budget_mxn: 44000, cost_mxn: 19000, spent_mxn: 17400 },
+        { id: 'project-3', client_id: 'client-3', name: 'Rebranding Aflora', service: 'Branding', status: 'kickoff', progress: 18, due_date: isoDays(34), budget_mxn: 72000, cost_mxn: 30000, spent_mxn: 5200 },
+      ],
+      tasks: [
+        { id: 'task-1', title: 'Aprobar propuesta de Nébula', priority: 'urgent', due_at: isoDays(0), status: 'pending', lead_id: 'lead-1' },
+        { id: 'task-2', title: 'Dar seguimiento a Estudio Norte', priority: 'high', due_at: isoDays(0), status: 'pending', lead_id: 'lead-4' },
+        { id: 'task-3', title: 'Confirmar materiales de Ruta Viva', priority: 'normal', due_at: isoDays(2), status: 'pending', project_id: 'project-1' },
+        { id: 'task-4', title: 'Revisar margen de Casa Lumen', priority: 'high', due_at: isoDays(1), status: 'pending', lead_id: 'lead-3' },
+        { id: 'task-5', title: 'Enviar resumen de kickoff Aflora', priority: 'normal', due_at: isoDays(-1), status: 'done', project_id: 'project-3', completed_at: isoDays(-1) },
+      ],
+      payments: [
+        { id: 'payment-1', project_id: 'project-1', concept: 'Anticipo 50%', amount_mxn: 48000, due_date: isoDays(-12), status: 'paid', paid_at: isoDays(-13) },
+        { id: 'payment-2', project_id: 'project-1', concept: 'Liquidación', amount_mxn: 48000, due_date: isoDays(16), status: 'pending' },
+        { id: 'payment-3', project_id: 'project-2', concept: 'Segundo pago', amount_mxn: 22000, due_date: isoDays(3), status: 'pending' },
+        { id: 'payment-4', project_id: 'project-3', concept: 'Anticipo 50%', amount_mxn: 36000, due_date: isoDays(-4), status: 'paid', paid_at: isoDays(-4) },
+      ],
+      activities: [
+        { id: 'activity-1', lead_id: 'lead-1', kind: 'note', body: 'Pidió ajustar el calendario para presentar internamente el viernes.', created_at: isoDays(-1) },
+        { id: 'activity-2', lead_id: 'lead-1', kind: 'stage_change', body: 'El prospecto pasó a negociación.', created_at: isoDays(-2) },
+        { id: 'activity-3', lead_id: 'lead-2', kind: 'proposal', body: 'Propuesta aprobada internamente; lista para envío.', created_at: isoDays(-1) },
+      ],
+      system: { database: false, form: false, automation: false },
+    };
+  }
+
+  const safe = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+  const id = () => (crypto.randomUUID ? crypto.randomUUID() : `local-${Date.now()}-${Math.random()}`);
+  const asDate = (value) => value ? new Date(value) : null;
+  const fmtDate = (value, compact = false) => {
+    const parsed = asDate(value);
+    return parsed && !Number.isNaN(parsed.valueOf()) ? (compact ? shortDate : date).format(parsed) : 'Sin fecha';
+  };
+  const percent = (amount, cost) => Number(amount) > 0 ? ((Number(amount) - Number(cost || 0)) / Number(amount)) * 100 : 0;
+  const daysFromNow = (value) => value ? Math.ceil((new Date(value).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000) : null;
+  const stageName = (value) => STAGES.find(([key]) => key === value)?.[1] || value || 'Sin etapa';
+  const projectStageName = (value) => PROJECT_STAGES.find(([key]) => key === value)?.[1] || value || 'Sin etapa';
+  const leadById = (leadId) => state.leads.find((lead) => lead.id === leadId);
+  const clientById = (clientId) => state.clients.find((client) => client.id === clientId);
+  const projectById = (projectId) => state.projects.find((project) => project.id === projectId);
+  const relationName = (item) => leadById(item.lead_id)?.company || projectById(item.project_id)?.name || 'General';
+  const initials = (name = 'VGG') => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+
+  function notify(message) {
+    const toast = $('#toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+  }
+
+  async function api(path, options = {}) {
+    const response = await fetch(`/api/vgg-crm/${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(options.headers || {}),
+      },
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || 'No fue posible completar la operación.');
+    return payload;
+  }
+
+  async function boot() {
+    bindEvents();
+    fillFilters();
+    if (demoMode) {
+      state = demoState();
+      $('#demo-banner').hidden = false;
+      showApp();
+      return;
+    }
+
+    try {
+      const config = await api('config');
+      if (!config.supabaseUrl || !config.supabasePublishableKey || !window.supabase) throw new Error('El CRM de VGG aún no tiene una base conectada.');
+      client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      });
+      const { data: { session } } = await client.auth.getSession();
+      if (session) {
+        accessToken = session.access_token;
+        await loadData();
+        showApp();
+      } else {
+        showAuth();
+      }
+      client.auth.onAuthStateChange(async (event, sessionValue) => {
+        if (event === 'SIGNED_OUT') return showAuth();
+        if (sessionValue?.access_token) accessToken = sessionValue.access_token;
+      });
+    } catch (error) {
+      showAuth(error.message);
+    }
+  }
+
+  async function loadData() {
+    const payload = await api('data');
+    state = { ...emptyState(), ...payload, system: { database: true, form: Boolean(payload.system?.form), automation: Boolean(payload.system?.automation) } };
+  }
+
+  function showAuth(message = '') {
+    document.body.classList.remove('is-loading');
+    $('#app-shell').hidden = true;
+    $('#auth-shell').hidden = false;
+    $('#auth-message').textContent = message;
+  }
+
+  function showApp() {
+    document.body.classList.remove('is-loading');
+    $('#auth-shell').hidden = true;
+    $('#app-shell').hidden = false;
+    syncProfile();
+    renderAll();
+  }
+
+  function syncProfile() {
+    const profile = state.profile || {};
+    const name = profile.full_name || profile.email?.split('@')[0] || 'Equipo VGG';
+    $('#user-name').textContent = name;
+    $('#user-role').textContent = ROLE_NAMES[profile.role] || 'Colaborador';
+    $('#user-avatar').textContent = initials(name);
+    $('#greeting').textContent = `Hola, ${name.split(' ')[0]}.`;
+    $$('.owner-only').forEach((element) => { element.hidden = profile.role !== 'owner'; });
+    $('#db-status-dot').classList.toggle('standby', !state.system.database);
+    $('#db-status-copy').textContent = state.system.database
+      ? 'Conectada a la instancia independiente de VGG y protegida por el backend.'
+      : 'Demo local: falta conectar una cuenta Supabase independiente de VGG.';
+  }
+
+  function renderAll() {
+    renderDashboard();
+    renderPipeline();
+    renderLeads();
+    renderProposals();
+    renderProjects();
+    renderTasks();
+    renderFinance();
+    fillRelations();
+    $('#nav-lead-count').textContent = state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage)).length;
+    $('#nav-task-count').textContent = state.tasks.filter((task) => task.status !== 'done').length;
+    if (selectedLeadId) renderLeadDetail(selectedLeadId);
+  }
+
+  function renderDashboard() {
+    const openLeads = state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage));
+    const pipelineValue = state.proposals.filter((proposal) => !['rejected'].includes(proposal.status)).reduce((total, proposal) => total + Number(proposal.amount_mxn || 0), 0);
+    const pendingRevenue = state.payments.filter((payment) => payment.status === 'pending').reduce((total, payment) => total + Number(payment.amount_mxn || 0), 0);
+    const urgentTasks = state.tasks.filter((task) => task.status !== 'done' && (task.priority === 'urgent' || daysFromNow(task.due_at) <= 0));
+    const activeProjects = state.projects.filter((project) => !['completed', 'cancelled'].includes(project.status));
+    const averageMargin = activeProjects.length ? activeProjects.reduce((total, project) => total + percent(project.budget_mxn, project.cost_mxn), 0) / activeProjects.length : 0;
+    const kpis = [
+      ['Prospectos abiertos', openLeads.length, 'requieren avance', openLeads.length > 5 ? 'warn' : ''],
+      ['Pipeline cotizado', money.format(pipelineValue), 'valor sin cerrar', ''],
+      ['Por cobrar', money.format(pendingRevenue), 'pagos pendientes', pendingRevenue ? 'warn' : 'good'],
+      ['Atención hoy', urgentTasks.length, 'acciones prioritarias', urgentTasks.length ? 'bad' : 'good'],
+      ['Margen previsto', `${averageMargin.toFixed(0)}%`, 'objetivo ≥ 50%', averageMargin >= 50 ? 'good' : 'bad'],
+    ];
+    $('#dashboard-kpis').innerHTML = kpis.map(([label, value, copy, tone]) => `<article class="kpi ${tone}"><small>${safe(label)}</small><strong>${safe(value)}</strong><span>${safe(copy)}</span></article>`).join('');
+
+    const maxCount = Math.max(1, ...STAGES.map(([stage]) => state.leads.filter((lead) => lead.stage === stage).length));
+    $('#pipeline-summary').innerHTML = STAGES.slice(0, 5).map(([stage, label]) => {
+      const count = state.leads.filter((lead) => lead.stage === stage).length;
+      return `<div class="pipeline-row"><label>${safe(label)}</label><div class="pipeline-bar"><i style="width:${Math.max(count ? 12 : 0, count / maxCount * 100)}%"></i></div><b>${count}</b></div>`;
+    }).join('') || empty('Sin prospectos todavía.');
+
+    const attention = buildAttention().slice(0, 5);
+    $('#attention-list').innerHTML = attention.length ? attention.map((item) => `<button class="attention-item" data-attention="${safe(item.id)}"><i></i><span><b>${safe(item.title)}</b><p>${safe(item.copy)}</p></span><time>${safe(item.when)}</time></button>`).join('') : empty('Todo está al día.');
+
+    $('#active-projects').innerHTML = activeProjects.length ? activeProjects.slice(0, 3).map(projectMini).join('') : empty('El primer proyecto aparecerá aquí cuando una propuesta sea aceptada.');
+  }
+
+  function buildAttention() {
+    const items = state.tasks.filter((task) => task.status !== 'done').map((task) => ({ id: task.lead_id || task.project_id || task.id, title: task.title, copy: relationName(task), when: daysFromNow(task.due_at) < 0 ? 'Vencida' : daysFromNow(task.due_at) === 0 ? 'Hoy' : fmtDate(task.due_at, true), sort: new Date(task.due_at).valueOf() }));
+    state.proposals.filter((proposal) => proposal.status === 'draft').forEach((proposal) => {
+      const lead = leadById(proposal.lead_id);
+      items.push({ id: proposal.lead_id, title: proposal.margin_percent < 50 ? 'Revisar margen antes de aprobar' : 'Aprobar propuesta', copy: lead?.company || proposal.title, when: `${Number(proposal.margin_percent).toFixed(0)}% margen`, sort: new Date(proposal.created_at).valueOf() });
+    });
+    return items.sort((a, b) => a.sort - b.sort);
+  }
+
+  function projectMini(project) {
+    const clientName = clientById(project.client_id)?.name || 'Cliente';
+    return `<article class="project-mini"><header><h3>${safe(project.name)}</h3><span class="tag purple">${safe(projectStageName(project.status))}</span></header><p>${safe(clientName)} · ${safe(project.service)}</p><div class="progress"><i style="width:${Math.min(100, Number(project.progress || 0))}%"></i></div><footer><span>${Number(project.progress || 0)}% completo</span><span>${fmtDate(project.due_date, true)}</span></footer></article>`;
+  }
+
+  function renderPipeline() {
+    $('#kanban').innerHTML = STAGES.map(([stage, label]) => {
+      const leads = state.leads.filter((lead) => lead.stage === stage);
+      return `<section class="kanban-column" data-stage="${stage}"><header><span>${safe(label)}</span><b>${leads.length}</b></header>${leads.length ? leads.map((lead) => `<article class="lead-card" data-lead-id="${safe(lead.id)}"><h3>${safe(lead.company || lead.contact_name)}</h3><p>${safe(lead.contact_name)} · ${safe(lead.service || 'Por definir')}</p><footer><span class="tag ${priorityTone(lead.priority)}">${safe(PRIORITY_NAMES[lead.priority] || lead.priority)}</span><small>${Number(lead.score || 0)} pts</small></footer></article>`).join('') : empty('Sin oportunidades')}</section>`;
+    }).join('');
+  }
+
+  function renderLeads() {
+    const search = ($('#lead-search').value || '').toLowerCase();
+    const stage = $('#lead-stage-filter').value;
+    const service = $('#lead-service-filter').value;
+    const leads = state.leads.filter((lead) => (!stage || lead.stage === stage) && (!service || lead.service === service) && (!search || [lead.contact_name, lead.company, lead.email].some((value) => String(value || '').toLowerCase().includes(search))));
+    $('#leads-table').innerHTML = leads.length ? leads.map((lead) => `<tr data-lead-id="${safe(lead.id)}"><td><strong>${safe(lead.company || lead.contact_name)}</strong><small>${safe(lead.contact_name)} · ${safe(lead.email)}</small></td><td>${safe(lead.service || 'Por definir')}</td><td>${safe(lead.budget_range || 'Sin definir')}</td><td><span class="tag purple">${safe(stageName(lead.stage))}</span></td><td><span class="tag ${priorityTone(lead.priority)}">${safe(PRIORITY_NAMES[lead.priority] || lead.priority)}</span></td><td>${fmtDate(lead.created_at, true)}</td></tr>`).join('') : `<tr><td colspan="6">${empty('No encontramos oportunidades con esos filtros.')}</td></tr>`;
+  }
+
+  function renderProposals() {
+    const open = state.proposals.filter((proposal) => !['accepted', 'rejected'].includes(proposal.status));
+    const approved = state.proposals.filter((proposal) => ['approved', 'sent', 'accepted'].includes(proposal.status));
+    const atRisk = state.proposals.filter((proposal) => Number(proposal.margin_percent) < 50);
+    $('#proposal-stats').innerHTML = [
+      ['En proceso', open.length],
+      ['Valor aprobado', money.format(approved.reduce((total, proposal) => total + Number(proposal.amount_mxn || 0), 0))],
+      ['Margen por revisar', atRisk.length],
+    ].map(([label, value]) => `<div><small>${safe(label)}</small><b>${safe(value)}</b></div>`).join('');
+    $('#proposal-grid').innerHTML = state.proposals.length ? state.proposals.map((proposal) => {
+      const lead = leadById(proposal.lead_id);
+      const margin = Number(proposal.margin_percent ?? percent(proposal.amount_mxn, proposal.estimated_cost_mxn));
+      const canApprove = state.profile?.role === 'owner' && proposal.status === 'draft' && margin >= 50;
+      return `<article class="proposal-card"><header><div><h3>${safe(proposal.title)}</h3><p>${safe(lead?.company || lead?.contact_name || 'Prospecto')}</p></div><span class="tag ${proposal.status === 'accepted' ? 'green' : 'purple'}">${safe(PROPOSAL_NAMES[proposal.status] || proposal.status)}</span></header><p>${safe(proposal.scope || 'Alcance por completar.')}</p><div class="proposal-numbers"><div><small>PRECIO</small><b>${money.format(proposal.amount_mxn || 0)}</b></div><div><small>MARGEN</small><b class="${margin >= 50 ? '' : 'danger'}">${margin.toFixed(0)}%</b></div></div><footer><small>${margin >= 50 ? 'Cumple objetivo VGG' : 'Requiere ajustar precio o costo'}</small>${canApprove ? `<button class="text-action" data-approve-proposal="${safe(proposal.id)}">Aprobar →</button>` : ''}</footer></article>`;
+    }).join('') : empty('Crea la primera propuesta desde una oportunidad calificada.');
+  }
+
+  function renderProjects() {
+    $('#project-board').innerHTML = PROJECT_STAGES.map(([stage, label]) => {
+      const projects = state.projects.filter((project) => project.status === stage);
+      return `<section class="project-column"><header><span>${safe(label)}</span><b>${projects.length}</b></header>${projects.length ? projects.map((project) => {
+        const margin = percent(project.budget_mxn, project.cost_mxn);
+        return `<article class="project-card"><h3>${safe(project.name)}</h3><p>${safe(clientById(project.client_id)?.name || 'Cliente')} · ${safe(project.service)}</p><div class="progress"><i style="width:${Math.min(100, Number(project.progress || 0))}%"></i></div><dl><div><dt>ENTREGA</dt><dd>${fmtDate(project.due_date, true)}</dd></div><div><dt>MARGEN</dt><dd>${margin.toFixed(0)}%</dd></div></dl><span class="tag ${daysFromNow(project.due_date) < 5 ? 'red' : 'green'}">${Number(project.progress || 0)}% completo</span></article>`;
+      }).join('') : empty('Sin proyectos')}</section>`;
+    }).join('');
+  }
+
+  function renderTasks() {
+    const pending = state.tasks.filter((task) => task.status !== 'done').sort((a, b) => new Date(a.due_at) - new Date(b.due_at));
+    const done = state.tasks.filter((task) => task.status === 'done').sort((a, b) => new Date(b.completed_at || b.due_at) - new Date(a.completed_at || a.due_at));
+    $('#pending-tasks').innerHTML = pending.length ? pending.map(taskItem).join('') : empty('No hay pendientes.');
+    $('#completed-tasks').innerHTML = done.length ? done.map(taskItem).join('') : empty('Todavía no hay tareas completadas.');
+  }
+
+  function taskItem(task) {
+    const done = task.status === 'done';
+    const due = daysFromNow(task.due_at);
+    return `<article class="task-item"><button class="task-check ${done ? 'done' : ''}" data-toggle-task="${safe(task.id)}" aria-label="${done ? 'Reabrir' : 'Completar'} tarea">${done ? '✓' : ''}</button><div><b>${safe(task.title)}</b><p>${safe(relationName(task))} · ${safe(PRIORITY_NAMES[task.priority] || task.priority)}</p></div><time class="${!done && due < 0 ? 'danger' : ''}">${done ? 'Lista' : due < 0 ? 'Vencida' : due === 0 ? 'Hoy' : fmtDate(task.due_at, true)}</time></article>`;
+  }
+
+  function renderFinance() {
+    const invoiced = state.payments.reduce((total, payment) => total + Number(payment.amount_mxn || 0), 0);
+    const paid = state.payments.filter((payment) => payment.status === 'paid').reduce((total, payment) => total + Number(payment.amount_mxn || 0), 0);
+    const pending = invoiced - paid;
+    const costs = state.projects.reduce((total, project) => total + Number(project.cost_mxn || 0), 0);
+    const budgets = state.projects.reduce((total, project) => total + Number(project.budget_mxn || 0), 0);
+    const margin = percent(budgets, costs);
+    $('#finance-kpis').innerHTML = [
+      ['Facturado', money.format(invoiced), 'pagos registrados', ''],
+      ['Cobrado', money.format(paid), invoiced ? `${(paid / invoiced * 100).toFixed(0)}% del total` : 'sin movimientos', 'good'],
+      ['Pendiente', money.format(pending), 'por cobrar', pending ? 'warn' : 'good'],
+      ['Costo previsto', money.format(costs), 'proyectos activos', ''],
+      ['Margen cartera', `${margin.toFixed(0)}%`, 'objetivo ≥ 50%', margin >= 50 ? 'good' : 'bad'],
+    ].map(([label, value, copy, tone]) => `<article class="kpi ${tone}"><small>${safe(label)}</small><strong>${safe(value)}</strong><span>${safe(copy)}</span></article>`).join('');
+
+    const payments = [...state.payments].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+    $('#payment-list').innerHTML = payments.length ? payments.map((payment) => `<article class="payment-row"><div><b>${safe(projectById(payment.project_id)?.name || 'Proyecto')}</b><p>${safe(payment.concept)} · ${fmtDate(payment.due_date, true)}</p></div><strong>${money.format(payment.amount_mxn || 0)}</strong><span class="tag ${payment.status === 'paid' ? 'green' : daysFromNow(payment.due_date) < 0 ? 'red' : 'warm'}">${payment.status === 'paid' ? 'Pagado' : daysFromNow(payment.due_date) < 0 ? 'Vencido' : 'Pendiente'}</span></article>`).join('') : empty('No hay pagos registrados.');
+    $('#margin-list').innerHTML = state.projects.length ? state.projects.map((project) => {
+      const value = percent(project.budget_mxn, project.cost_mxn);
+      return `<article class="margin-row"><header><h3>${safe(project.name)}</h3><b class="${value >= 50 ? '' : 'danger'}">${value.toFixed(0)}%</b></header><p>${money.format(project.budget_mxn || 0)} ingreso · ${money.format(project.cost_mxn || 0)} costo previsto</p><div class="progress"><i style="width:${Math.min(100, value)}%;background:${value >= 50 ? 'var(--lime)' : 'var(--red)'}"></i></div></article>`;
+    }).join('') : empty('Los márgenes aparecerán con los proyectos.');
+  }
+
+  function renderLeadDetail(leadId) {
+    const lead = leadById(leadId);
+    if (!lead) return closeDrawer();
+    selectedLeadId = leadId;
+    const activities = state.activities.filter((activity) => activity.lead_id === leadId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    $('#lead-detail').innerHTML = `<section class="lead-hero"><p class="eyebrow">${safe(stageName(lead.stage))}</p><h2>${safe(lead.company || lead.contact_name)}</h2><p>${safe(lead.contact_name)} · ${safe(lead.email)}${lead.phone ? ` · ${safe(lead.phone)}` : ''}</p></section><div class="lead-meta"><div><small>SERVICIO</small><b>${safe(lead.service || 'Por definir')}</b></div><div><small>PRESUPUESTO</small><b>${safe(lead.budget_range || 'Sin definir')}</b></div><div><small>ORIGEN</small><b>${safe(lead.source || 'Manual')}</b></div><div><small>SCORE</small><b>${Number(lead.score || 0)} / 100</b></div></div><p>${safe(lead.message || 'Sin contexto registrado.')}</p><div class="drawer-actions">${STAGES.map(([stage, label]) => `<button class="button ${lead.stage === stage ? 'primary' : 'ghost'}" data-change-stage="${stage}" ${lead.stage === stage ? 'disabled' : ''}>${safe(label)}</button>`).join('')}</div><div class="timeline"><p class="eyebrow">HISTORIAL</p>${activities.length ? activities.map((activity) => `<article class="timeline-item"><b>${safe(activity.kind === 'stage_change' ? 'Cambio de etapa' : activity.kind === 'proposal' ? 'Propuesta' : 'Nota')}</b><p>${safe(activity.body)}</p><time>${fmtDate(activity.created_at)}</time></article>`).join('') : empty('Aún no hay actividad registrada.')}</div>`;
+    $('#lead-drawer').classList.add('open');
+    $('#lead-drawer').setAttribute('aria-hidden', 'false');
+    $('#scrim').classList.add('open');
+  }
+
+  function fillFilters() {
+    $('#lead-stage-filter').insertAdjacentHTML('beforeend', STAGES.concat([['lost', 'Perdido']]).map(([value, label]) => `<option value="${value}">${label}</option>`).join(''));
+  }
+
+  function fillRelations() {
+    const services = [...new Set(state.leads.map((lead) => lead.service).filter(Boolean))].sort();
+    const serviceFilter = $('#lead-service-filter');
+    const currentService = serviceFilter.value;
+    serviceFilter.innerHTML = '<option value="">Todos los servicios</option>' + services.map((service) => `<option>${safe(service)}</option>`).join('');
+    serviceFilter.value = currentService;
+    $('#proposal-lead').innerHTML = '<option value="">Selecciona</option>' + state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage)).map((lead) => `<option value="${safe(lead.id)}">${safe(lead.company || lead.contact_name)} · ${safe(lead.service || 'Por definir')}</option>`).join('');
+    $('#project-client').innerHTML = '<option value="">Selecciona</option>' + state.clients.map((client) => `<option value="${safe(client.id)}">${safe(client.name)}</option>`).join('');
+    $('#task-relation').innerHTML = '<option value="">General</option><optgroup label="Prospectos">' + state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage)).map((lead) => `<option value="lead:${safe(lead.id)}">${safe(lead.company || lead.contact_name)}</option>`).join('') + '</optgroup><optgroup label="Proyectos">' + state.projects.map((project) => `<option value="project:${safe(project.id)}">${safe(project.name)}</option>`).join('') + '</optgroup>';
+  }
+
+  function priorityTone(priority) {
+    return priority === 'urgent' ? 'red' : priority === 'high' ? 'hot' : priority === 'low' ? '' : 'warm';
+  }
+
+  function empty(copy) {
+    return `<div class="empty">${safe(copy)}</div>`;
+  }
+
+  function switchView(view) {
+    currentView = view;
+    $$('.view').forEach((element) => element.classList.toggle('active', element.id === `view-${view}`));
+    $$('.nav-item').forEach((element) => element.classList.toggle('active', element.dataset.view === view));
+    $('#sidebar').classList.remove('open');
+    $('#scrim').classList.remove('open');
+    $('#menu-toggle').setAttribute('aria-expanded', 'false');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function closeDrawer() {
+    selectedLeadId = null;
+    $('#lead-drawer').classList.remove('open');
+    $('#lead-drawer').setAttribute('aria-hidden', 'true');
+    $('#scrim').classList.remove('open');
+  }
+
+  async function mutate(action, payload, localMutation) {
+    try {
+      if (demoMode) {
+        localMutation?.();
+        renderAll();
+        notify('Demo actualizada temporalmente. No se guardaron datos reales.');
+        return;
+      }
+      const result = await api('action', { method: 'POST', body: JSON.stringify({ action, payload }) });
+      await loadData();
+      renderAll();
+      notify(result.message || 'Cambio guardado.');
+    } catch (error) {
+      notify(error.message);
+      throw error;
+    }
+  }
+
+  async function submitForm(form) {
+    if (!form.reportValidity()) return;
+    const values = Object.fromEntries(new FormData(form));
+    const submit = form.dataset.submit;
+    if (submit === 'create-lead') {
+      await mutate('create_lead', values, () => state.leads.unshift({ id: id(), ...values, stage: 'new', priority: 'normal', score: 45, source: 'Captura manual', created_at: new Date().toISOString(), next_action_at: new Date().toISOString() }));
+    } else if (submit === 'save-proposal') {
+      const proposal = { ...values, amount_mxn: Number(values.amount_mxn), estimated_cost_mxn: Number(values.estimated_cost_mxn) };
+      proposal.margin_percent = percent(proposal.amount_mxn, proposal.estimated_cost_mxn);
+      await mutate('save_proposal', proposal, () => state.proposals.unshift({ id: id(), ...proposal, status: 'draft', created_at: new Date().toISOString() }));
+    } else if (submit === 'save-project') {
+      const project = { ...values, budget_mxn: Number(values.budget_mxn || 0), cost_mxn: Number(values.cost_mxn || 0) };
+      await mutate('save_project', project, () => state.projects.unshift({ id: id(), ...project, status: 'kickoff', progress: 5, spent_mxn: 0 }));
+    } else if (submit === 'create-task') {
+      const [relationType, relationId] = String(values.relation || '').split(':');
+      const task = { title: values.title, due_at: values.due_at, priority: values.priority, ...(relationType === 'lead' ? { lead_id: relationId } : relationType === 'project' ? { project_id: relationId } : {}) };
+      await mutate('create_task', task, () => state.tasks.unshift({ id: id(), ...task, status: 'pending' }));
+    }
+    form.closest('dialog').close();
+    form.reset();
+    updateMarginPreview();
+  }
+
+  function bindEvents() {
+    document.addEventListener('click', async (event) => {
+      const viewButton = event.target.closest('[data-view], [data-view-target]');
+      if (viewButton) return switchView(viewButton.dataset.view || viewButton.dataset.viewTarget);
+      const openButton = event.target.closest('[data-open]');
+      if (openButton) return $(`#${openButton.dataset.open}`).showModal();
+      const leadButton = event.target.closest('[data-lead-id]');
+      if (leadButton) return renderLeadDetail(leadButton.dataset.leadId);
+      const attentionButton = event.target.closest('[data-attention]');
+      if (attentionButton && leadById(attentionButton.dataset.attention)) return renderLeadDetail(attentionButton.dataset.attention);
+      const taskButton = event.target.closest('[data-toggle-task]');
+      if (taskButton) {
+        const task = state.tasks.find((item) => item.id === taskButton.dataset.toggleTask);
+        if (!task) return;
+        const nextStatus = task.status === 'done' ? 'pending' : 'done';
+        return mutate('toggle_task', { task_id: task.id, status: nextStatus }, () => { task.status = nextStatus; task.completed_at = nextStatus === 'done' ? new Date().toISOString() : null; });
+      }
+      const stageButton = event.target.closest('[data-change-stage]');
+      if (stageButton && selectedLeadId) {
+        const lead = leadById(selectedLeadId);
+        const nextStage = stageButton.dataset.changeStage;
+        return mutate('change_stage', { lead_id: selectedLeadId, stage: nextStage }, () => { const previous = lead.stage; lead.stage = nextStage; state.activities.unshift({ id: id(), lead_id: lead.id, kind: 'stage_change', body: `La oportunidad pasó de ${stageName(previous)} a ${stageName(nextStage)}.`, created_at: new Date().toISOString() }); });
+      }
+      const proposalButton = event.target.closest('[data-approve-proposal]');
+      if (proposalButton) {
+        const proposal = state.proposals.find((item) => item.id === proposalButton.dataset.approveProposal);
+        if (!proposal) return;
+        return mutate('approve_proposal', { proposal_id: proposal.id }, () => { proposal.status = 'approved'; });
+      }
+    });
+
+    $$('form[data-submit]').forEach((form) => form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const submitter = event.submitter;
+      if (submitter?.value === 'cancel') return form.closest('dialog').close();
+      submitter?.setAttribute('disabled', '');
+      try { await submitForm(form); } catch (_) { /* shown by mutate */ } finally { submitter?.removeAttribute('disabled'); }
+    }));
+    $$('.dialog-close').forEach((button) => button.addEventListener('click', (event) => { event.preventDefault(); button.closest('dialog').close(); }));
+    $('.drawer-close').addEventListener('click', closeDrawer);
+    $('#scrim').addEventListener('click', () => {
+      closeDrawer();
+      $('#sidebar').classList.remove('open');
+      $('#menu-toggle').setAttribute('aria-expanded', 'false');
+    });
+    $('#menu-toggle').addEventListener('click', () => {
+      const open = $('#sidebar').classList.toggle('open');
+      $('#menu-toggle').setAttribute('aria-expanded', String(open));
+      $('#scrim').classList.toggle('open', open);
+    });
+    $('#lead-search').addEventListener('input', renderLeads);
+    $('#lead-stage-filter').addEventListener('change', renderLeads);
+    $('#lead-service-filter').addEventListener('change', renderLeads);
+    $('#proposal-dialog').addEventListener('input', updateMarginPreview);
+    $('#login-form').addEventListener('submit', login);
+    $('#reset-password').addEventListener('click', resetPassword);
+    $('#sign-out').addEventListener('click', signOut);
+  }
+
+  function updateMarginPreview() {
+    const form = $('#proposal-dialog form');
+    const value = percent(form.elements.amount_mxn.value, form.elements.estimated_cost_mxn.value);
+    const strong = $('#proposal-margin-preview strong');
+    strong.textContent = form.elements.amount_mxn.value ? `${value.toFixed(0)}%` : '—';
+    strong.style.color = value >= 50 ? 'var(--lime)' : 'var(--red)';
+  }
+
+  async function login(event) {
+    event.preventDefault();
+    if (!client) return $('#auth-message').textContent = 'Primero conecta el proyecto Supabase independiente de VGG. Mientras tanto puedes abrir la demo segura.';
+    const button = event.submitter;
+    button.disabled = true;
+    $('#auth-message').textContent = 'Validando acceso…';
+    try {
+      const { data, error } = await client.auth.signInWithPassword({ email: $('#login-email').value.trim(), password: $('#login-password').value });
+      if (error) throw error;
+      accessToken = data.session.access_token;
+      await loadData();
+      showApp();
+    } catch (error) {
+      $('#auth-message').textContent = error.message || 'No fue posible iniciar sesión.';
+    } finally { button.disabled = false; }
+  }
+
+  async function resetPassword() {
+    const email = $('#login-email').value.trim();
+    if (!client) return $('#auth-message').textContent = 'La recuperación estará disponible al conectar Supabase VGG.';
+    if (!email) return $('#auth-message').textContent = 'Escribe tu correo primero.';
+    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/crm/` });
+    $('#auth-message').textContent = error ? error.message : 'Revisa tu correo para recuperar el acceso.';
+  }
+
+  async function signOut() {
+    if (demoMode) return location.assign('./');
+    await client?.auth.signOut();
+    accessToken = '';
+    state = emptyState();
+    showAuth();
+  }
+
+  boot();
+})();

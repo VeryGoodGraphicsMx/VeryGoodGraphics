@@ -1,0 +1,40 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/vgg-crm/config"
+  to = "/.netlify/functions/vgg-crm-config"
+  status = 200
+
+[[redirects]]
+  from = "/api/vgg-crm/data"
+  to = "/.netlify/functions/vgg-crm-data"
+  status = 200
+
+[[redirects]]
+  from = "/api/vgg-crm/action"
+  to = "/.netlify/functions/vgg-crm-action"
+  status = 200
+
+[[redirects]]
+  from = "/api/vgg-crm/intake"
+  to = "/.netlify/functions/vgg-lead-intake"
+  status = 200
+
+[[headers]]
+  for = "/crm/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/api/vgg-crm/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Content-Type-Options = "nosniff"
+    X-Robots-Tag = "noindex"
