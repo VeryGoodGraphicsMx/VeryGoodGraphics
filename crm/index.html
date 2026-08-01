@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#080a10">
+  <title>VGG CRM · Operación creativa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20260801-4">
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
+  <script defer src="app.js?v=20260801-4"></script>
+</head>
+<body class="is-loading">
+  <div class="ambient" aria-hidden="true"></div>
+
+  <section class="auth-shell" id="auth-shell" aria-labelledby="auth-title">
+    <div class="auth-art" aria-hidden="true">
+      <div class="auth-grid"></div>
+      <div class="auth-orbit"></div>
+      <p>Ideas con propósito.</p>
+      <strong>Negocios con control.</strong>
+    </div>
+    <div class="auth-card">
+      <a class="brand brand-auth" href="../index.html" aria-label="Very Good Graphics">
+        <span class="logo-crop"><img src="../media/logo.png" alt="Very Good Graphics"></span>
+        <span><b>VGG</b><small>CRM</small></span>
+      </a>
+      <p class="eyebrow">PORTAL PRIVADO</p>
+      <h1 id="auth-title">Tu operación creativa, en un solo lugar.</h1>
+      <p class="auth-copy">Prospectos, propuestas, proyectos, pagos y tareas con la lógica comercial de VGG.</p>
+      <form id="login-form" class="stack">
+        <label>Correo<input id="login-email" type="email" autocomplete="email" placeholder="tu@correo.com" required></label>
+        <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" required></label>
+        <button class="button primary" type="submit">Entrar al CRM <span>→</span></button>
+      </form>
+      <button class="link-button" id="reset-password" type="button">Recuperar acceso</button>
+      <a class="button ghost demo-entry" id="demo-entry" href="?demo=1">Ver demo segura</a>
+      <p class="form-message" id="auth-message" role="status"></p>
+    </div>
+  </section>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="../index.html" aria-label="Very Good Graphics">
+        <span class="logo-crop"><img src="../media/logo.png" alt="Very Good Graphics"></span>
+        <span><b>VGG</b><small>CRM</small></span>
+      </a>
+
+      <nav class="main-nav" aria-label="Secciones del CRM">
+        <p>OPERACIÓN</p>
+        <button class="nav-item active" data-view="dashboard"><span>⌁</span>Resumen</button>
+        <button class="nav-item" data-view="pipeline"><span>▥</span>Pipeline</button>
+        <button class="nav-item" data-view="leads"><span>◎</span>Prospectos <em id="nav-lead-count">0</em></button>
+        <button class="nav-item" data-view="proposals"><span>◇</span>Propuestas</button>
+        <button class="nav-item" data-view="projects"><span>▣</span>Proyectos</button>
+        <button class="nav-item" data-view="tasks"><span>✓</span>Tareas <em id="nav-task-count">0</em></button>
+        <p>CONTROL</p>
+        <button class="nav-item" data-view="finance"><span>$</span>Pagos y margen</button>
+        <button class="nav-item owner-only" data-view="system"><span>⚙</span>Sistema</button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="user-avatar" id="user-avatar">JP</div>
+        <div><b id="user-name">Juan Palao</b><small id="user-role">Dirección</small></div>
+        <button id="sign-out" title="Cerrar sesión" aria-label="Cerrar sesión">↗</button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="mobile-header">
+        <button id="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <span>VGG CRM</span>
+        <button class="quick-add" data-open="lead-dialog" aria-label="Nuevo prospecto">+</button>
+      </header>
+
+      <div class="demo-banner" id="demo-banner" hidden>
+        <b>Vista de demostración</b><span>Los datos son ficticios y las acciones no se guardan.</span>
+      </div>
+
+      <section class="view active" id="view-dashboard">
+        <div class="page-head">
+          <div><p class="eyebrow">CENTRO DE CONTROL</p><h1 id="greeting">Hola, Juan.</h1><p>Esto requiere tu atención hoy.</p></div>
+          <div class="head-actions"><button class="button ghost" data-view-target="tasks">Ver pendientes</button><button class="button primary" data-open="lead-dialog">Nuevo prospecto</button></div>
+        </div>
+        <div class="kpi-grid" id="dashboard-kpis"></div>
+        <div class="dashboard-grid">
+          <article class="panel pipeline-summary"><div class="panel-head"><div><p class="eyebrow">VENTAS</p><h2>Pipeline comercial</h2></div><button class="text-action" data-view-target="pipeline">Ver completo →</button></div><div id="pipeline-summary"></div></article>
+          <article class="panel attention-panel"><div class="panel-head"><div><p class="eyebrow">PRIORIDAD</p><h2>Siguiente mejor acción</h2></div></div><div id="attention-list" class="attention-list"></div></article>
+          <article class="panel wide"><div class="panel-head"><div><p class="eyebrow">PRODUCCIÓN</p><h2>Proyectos activos</h2></div><button class="text-action" data-view-target="projects">Gestionar →</button></div><div class="project-strip" id="active-projects"></div></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-pipeline">
+        <div class="page-head"><div><p class="eyebrow">VENTAS</p><h1>Pipeline</h1><p>De la primera conversación al proyecto ganado.</p></div><button class="button primary" data-open="lead-dialog">Nuevo prospecto</button></div>
+        <div class="kanban" id="kanban"></div>
+      </section>
+
+      <section class="view" id="view-leads">
+        <div class="page-head"><div><p class="eyebrow">PROSPECTOS</p><h1>Oportunidades</h1><p>Contactos provenientes del sitio, referidos y captura manual.</p></div><button class="button primary" data-open="lead-dialog">Nuevo prospecto</button></div>
+        <div class="toolbar"><input id="lead-search" type="search" placeholder="Buscar nombre, empresa o correo"><select id="lead-stage-filter"><option value="">Todas las etapas</option></select><select id="lead-service-filter"><option value="">Todos los servicios</option></select></div>
+        <div class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>Prospecto</th><th>Servicio</th><th>Presupuesto</th><th>Etapa</th><th>Prioridad</th><th>Ingreso</th></tr></thead><tbody id="leads-table"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="view-proposals">
+        <div class="page-head"><div><p class="eyebrow">PROPUESTAS</p><h1>Cotizaciones</h1><p>Alcance, costos y margen antes de enviarlas al cliente.</p></div><button class="button primary" data-open="proposal-dialog">Nueva propuesta</button></div>
+        <div class="stat-line" id="proposal-stats"></div>
+        <div class="proposal-grid" id="proposal-grid"></div>
+      </section>
+
+      <section class="view" id="view-projects">
+        <div class="page-head"><div><p class="eyebrow">ENTREGA</p><h1>Proyectos</h1><p>Kickoff, producción, revisión, entrega y cierre.</p></div><button class="button primary owner-only" data-open="project-dialog">Nuevo proyecto</button></div>
+        <div class="project-board" id="project-board"></div>
+      </section>
+
+      <section class="view" id="view-tasks">
+        <div class="page-head"><div><p class="eyebrow">ENFOQUE</p><h1>Tareas</h1><p>Próximas acciones comerciales y de producción.</p></div><button class="button primary" data-open="task-dialog">Nueva tarea</button></div>
+        <div class="task-layout"><div class="panel"><div class="panel-head"><h2>Pendientes</h2></div><div class="task-list" id="pending-tasks"></div></div><div class="panel"><div class="panel-head"><h2>Completadas</h2></div><div class="task-list compact" id="completed-tasks"></div></div></div>
+      </section>
+
+      <section class="view" id="view-finance">
+        <div class="page-head"><div><p class="eyebrow">RENTABILIDAD</p><h1>Pagos y margen</h1><p>VGG trabaja por proyecto y protege un margen objetivo mínimo de 50%.</p></div></div>
+        <div class="kpi-grid" id="finance-kpis"></div>
+        <div class="finance-grid"><article class="panel"><div class="panel-head"><h2>Calendario de cobro</h2></div><div class="payment-list" id="payment-list"></div></article><article class="panel"><div class="panel-head"><h2>Salud de proyectos</h2></div><div id="margin-list"></div></article></div>
+      </section>
+
+      <section class="view" id="view-system">
+        <div class="page-head"><div><p class="eyebrow">CONFIGURACIÓN</p><h1>Sistema VGG</h1><p>Estado de conexión, formularios y reglas comerciales.</p></div></div>
+        <div class="system-grid">
+          <article class="panel"><span class="status-dot" id="db-status-dot"></span><h2>Base de datos VGG</h2><p id="db-status-copy">Pendiente de conectar a una cuenta Supabase independiente.</p><code>VGG_SUPABASE_URL<br>VGG_SUPABASE_PUBLISHABLE_KEY<br>VGG_SUPABASE_SECRET_KEY</code></article>
+          <article class="panel"><span class="status-dot standby"></span><h2>Formulario del sitio</h2><p>Netlify Forms se conserva como respaldo hasta validar el envío real al CRM.</p><button class="button ghost" disabled>Prueba pendiente</button></article>
+          <article class="panel"><span class="status-dot standby"></span><h2>Automatización</h2><p>Confirmación al prospecto, aviso interno y tarea automática estarán disponibles después de conectar correo.</p><button class="button ghost" disabled>Segunda fase</button></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="lead-drawer" aria-hidden="true"><button class="drawer-close" aria-label="Cerrar">×</button><div id="lead-detail"></div></aside>
+
+  <dialog id="lead-dialog">
+    <form method="dialog" data-submit="create-lead">
+      <header><div><p class="eyebrow">NUEVA OPORTUNIDAD</p><h2>Registrar prospecto</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><label>Nombre<input name="contact_name" required></label><label>Correo<input name="email" type="email" required></label><label>Teléfono<input name="phone"></label><label>Empresa<input name="company"></label><label>Servicio<select name="service" required><option value="">Selecciona</option><option>Branding</option><option>Diseño gráfico</option><option>Diseño web</option><option>Fotografía</option><option>Video</option><option>Dron</option><option>Ilustración</option><option>Marketing</option></select></label><label>Presupuesto<select name="budget_range"><option value="">Sin definir</option><option>$5,000–$15,000 MXN</option><option>$15,000–$35,000 MXN</option><option>$35,000–$75,000 MXN</option><option>Más de $75,000 MXN</option></select></label><label class="full">Contexto<textarea name="message" rows="4"></textarea></label></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Guardar prospecto</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="proposal-dialog">
+    <form method="dialog" data-submit="save-proposal">
+      <header><div><p class="eyebrow">CONTROL DE MARGEN</p><h2>Nueva propuesta</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><label class="full">Prospecto<select name="lead_id" id="proposal-lead" required></select></label><label class="full">Título<input name="title" required placeholder="Identidad y lanzamiento de marca"></label><label>Precio al cliente<input name="amount_mxn" type="number" min="0" step="100" required></label><label>Costo estimado<input name="estimated_cost_mxn" type="number" min="0" step="100" required></label><label class="full">Alcance<textarea name="scope" rows="5" required></textarea></label></div>
+      <div class="margin-preview" id="proposal-margin-preview"><span>Margen estimado</span><strong>—</strong><small>Objetivo VGG: 50% o más</small></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Guardar borrador</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="project-dialog">
+    <form method="dialog" data-submit="save-project">
+      <header><div><p class="eyebrow">NUEVO PROYECTO</p><h2>Preparar kickoff</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><label class="full">Cliente<select name="client_id" id="project-client" required></select></label><label class="full">Proyecto<input name="name" required></label><label>Servicio<input name="service" required></label><label>Fecha de entrega<input name="due_date" type="date"></label><label>Presupuesto<input name="budget_mxn" type="number" min="0"></label><label>Costo previsto<input name="cost_mxn" type="number" min="0"></label></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Crear proyecto</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="task-dialog">
+    <form method="dialog" data-submit="create-task">
+      <header><div><p class="eyebrow">SIGUIENTE ACCIÓN</p><h2>Nueva tarea</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><label class="full">Tarea<input name="title" required></label><label>Fecha límite<input name="due_at" type="date" required></label><label>Prioridad<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label><label class="full">Relacionar con<select name="relation" id="task-relation"><option value="">General</option></select></label></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Crear tarea</button></footer>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>
