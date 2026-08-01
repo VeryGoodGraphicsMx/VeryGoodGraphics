@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260801-4">
+  <link rel="stylesheet" href="styles.css?v=20260801-5">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
-  <script defer src="app.js?v=20260801-4"></script>
+  <script defer src="app.js?v=20260801-5"></script>
 </head>
 <body class="is-loading">
   <div class="ambient" aria-hidden="true"></div>
@@ -28,17 +28,32 @@
         <span class="logo-crop"><img src="../media/logo.png" alt="Very Good Graphics"></span>
         <span><b>VGG</b><small>CRM</small></span>
       </a>
-      <p class="eyebrow">PORTAL PRIVADO</p>
-      <h1 id="auth-title">Tu operación creativa, en un solo lugar.</h1>
-      <p class="auth-copy">Prospectos, propuestas, proyectos, pagos y tareas con la lógica comercial de VGG.</p>
-      <form id="login-form" class="stack">
-        <label>Correo<input id="login-email" type="email" autocomplete="email" placeholder="tu@correo.com" required></label>
-        <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" required></label>
-        <button class="button primary" type="submit">Entrar al CRM <span>→</span></button>
-      </form>
-      <button class="link-button" id="reset-password" type="button">Recuperar acceso</button>
-      <a class="button ghost demo-entry" id="demo-entry" href="?demo=1">Ver demo segura</a>
-      <p class="form-message" id="auth-message" role="status"></p>
+      <div id="login-panel">
+        <p class="eyebrow">PORTAL PRIVADO</p>
+        <h1 id="auth-title">Tu operación creativa, en un solo lugar.</h1>
+        <p class="auth-copy">Prospectos, propuestas, proyectos, pagos y tareas con la lógica comercial de VGG.</p>
+        <form id="login-form" class="stack">
+          <label>Correo<input id="login-email" type="email" autocomplete="email" placeholder="tu@correo.com" required></label>
+          <label>Contraseña<input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" required></label>
+          <button class="button primary" type="submit">Entrar al CRM <span>→</span></button>
+        </form>
+        <button class="link-button" id="reset-password" type="button">Recuperar acceso</button>
+        <a class="button ghost demo-entry" id="demo-entry" href="?demo=1">Ver demo segura</a>
+        <p class="form-message" id="auth-message" role="status"></p>
+      </div>
+
+      <div id="password-recovery-panel" hidden>
+        <p class="eyebrow">ACCESO PROTEGIDO</p>
+        <h1>Nueva contraseña.</h1>
+        <p class="auth-copy">Crea una contraseña exclusiva para tu cuenta. No podrás entrar al CRM hasta guardarla correctamente.</p>
+        <form id="password-recovery-form" class="stack">
+          <label>Nueva contraseña<input id="new-password" type="password" autocomplete="new-password" minlength="12" placeholder="Mínimo 12 caracteres" required></label>
+          <label>Confirmar contraseña<input id="confirm-password" type="password" autocomplete="new-password" minlength="12" placeholder="Repite la contraseña" required></label>
+          <button class="button primary" type="submit">Guardar contraseña <span>→</span></button>
+        </form>
+        <p class="password-guidance">Usa 12 caracteres o más y no reutilices una contraseña de otro servicio.</p>
+        <p class="form-message" id="password-recovery-message" role="status" aria-live="polite"></p>
+      </div>
     </div>
   </section>
 
