@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260801-6">
+  <link rel="stylesheet" href="styles.css?v=20260801-7">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
-  <script defer src="app.js?v=20260801-6"></script>
+  <script defer src="app.js?v=20260801-7"></script>
 </head>
 <body class="is-loading">
   <div class="ambient" aria-hidden="true"></div>
@@ -123,7 +123,7 @@
       </section>
 
       <section class="view" id="view-proposals">
-        <div class="page-head"><div><p class="eyebrow">PROPUESTAS</p><h1>Cotizaciones</h1><p>Alcance, costos y margen antes de enviarlas al cliente.</p></div><button class="button primary" data-open="proposal-dialog">Nueva propuesta</button></div>
+        <div class="page-head"><div><p class="eyebrow">PROPUESTAS</p><h1>Cotizaciones</h1><p>Genera, aprueba y comparte propuestas privadas; al aceptar, prepara el kickoff.</p></div><button class="button primary" data-open="proposal-dialog">Nueva propuesta</button></div>
         <div class="stat-line" id="proposal-stats"></div>
         <div class="proposal-grid" id="proposal-grid"></div>
       </section>
@@ -184,7 +184,7 @@
   <dialog id="proposal-dialog">
     <form method="dialog" data-submit="save-proposal">
       <header><div><p class="eyebrow">CONTROL DE MARGEN</p><h2>Nueva propuesta</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
-      <div class="form-grid"><label class="full">Prospecto<select name="lead_id" id="proposal-lead" required></select></label><label class="full">Título<input name="title" required placeholder="Identidad y lanzamiento de marca"></label><label>Precio al cliente<input name="amount_mxn" type="number" min="0" step="100" required></label><label>Costo estimado<input name="estimated_cost_mxn" type="number" min="0" step="100" required></label><label class="full">Alcance<textarea name="scope" rows="5" required></textarea></label></div>
+      <div class="form-grid"><label class="full">Prospecto<select name="lead_id" id="proposal-lead" required></select></label><label class="full">Título<input name="title" required placeholder="Identidad y lanzamiento de marca"></label><label class="full">Mensaje para el cliente<textarea name="client_message" rows="3" placeholder="Qué vemos en su negocio y por qué proponemos esta ruta."></textarea></label><label>Precio de lista<input name="list_price_mxn" type="number" min="1" step="100" required></label><label>Precio final<input name="amount_mxn" type="number" min="1" step="100" required></label><label>Costo estimado<input name="estimated_cost_mxn" type="number" min="0" step="100" required></label><label>Nombre del beneficio<input name="discount_label" placeholder="Beneficio por decisión ágil"></label><label>Vigencia del beneficio<input name="discount_expires_at" type="datetime-local"></label><label class="full">Alcance<textarea name="scope" rows="5" required></textarea></label><label class="full">Entregables, uno por línea<textarea name="deliverables" rows="5" required></textarea></label><label class="full">Ruta de trabajo, una fase por línea<textarea name="timeline" rows="4" required></textarea></label><label>Liga de pago HTTPS<input name="payment_url" type="url" placeholder="https://..."></label><label>Liga de agenda HTTPS<input name="calendar_url" type="url" placeholder="https://..."></label></div>
       <div class="margin-preview" id="proposal-margin-preview"><span>Margen estimado</span><strong>—</strong><small>Objetivo VGG: 50% o más</small></div>
       <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Guardar borrador</button></footer>
     </form>
@@ -203,6 +203,14 @@
       <header><div><p class="eyebrow">SIGUIENTE ACCIÓN</p><h2>Nueva tarea</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
       <div class="form-grid"><label class="full">Tarea<input name="title" required></label><label>Fecha límite<input name="due_at" type="date" required></label><label>Prioridad<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select></label><label class="full">Relacionar con<select name="relation" id="task-relation"><option value="">General</option></select></label></div>
       <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Crear tarea</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="kickoff-dialog">
+    <form method="dialog" data-submit="generate-kickoff">
+      <header><div><p class="eyebrow">INICIO FORMAL</p><h2>Generar kickoff privado</h2></div><button value="cancel" class="dialog-close" aria-label="Cerrar">×</button></header>
+      <div class="form-grid"><input name="proposal_id" type="hidden"><label class="full">Nombre del proyecto<input name="project_name" required></label><label class="full">Encabezado<input name="headline" required placeholder="El siguiente paso para tu crecimiento"></label><label class="full">Objetivos, uno por línea<textarea name="objectives" rows="4" required></textarea></label><label class="full">Entregables, uno por línea<textarea name="deliverables" rows="5" required></textarea></label><label class="full">Proceso, un paso por línea<textarea name="process_steps" rows="4" required></textarea></label><label>Anticipo requerido (%)<input name="deposit_percent" type="number" min="0" max="100" value="50" required></label><label>Inicio estimado<input name="start_date" type="date"></label><label>Entrega objetivo<input name="due_date" type="date"></label><label>Liga de pago<input name="payment_url" type="url" placeholder="https://..."></label><label class="full">Liga para agendar<input name="calendar_url" type="url" placeholder="https://..."></label></div>
+      <footer><button value="cancel" class="button ghost">Cancelar</button><button class="button primary" value="default">Publicar kickoff y copiar liga</button></footer>
     </form>
   </dialog>
 

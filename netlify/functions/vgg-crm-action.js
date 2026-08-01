@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('node:crypto');
+
 const {
   response, handleOptions, assertMethod, parseBody, authenticate, supabaseFetch, select, insert, update,
   cleanText, cleanEmail, cleanNumber, cleanId, errorResponse,
@@ -10,6 +12,42 @@ const TASK_STATUSES = ['pending', 'done', 'cancelled'];
 const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 const ROLES = ['owner', 'sales', 'production'];
 const TEAMS = ['direction', 'commercial', 'production', 'viewer'];
+
+function cleanUrl(value) {
+  const result = cleanText(value, 1000);
+  if (!result) return null;
+  try {
+    const url = new URL(result);
+    if (url.protocol !== 'https:') throw new Error();
+    return url.toString();
+  } catch (_) {
+    const error = new Error('Las ligas deben ser HTTPS válidas.'); error.statusCode = 400; throw error;
+  }
+}
+
+function cleanDate(value) {
+  const result = cleanText(value, 40);
+  if (!result) return null;
+  if (!/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?/.test(result) || Number.isNaN(Date.parse(result))) {
+    const error = new Error('Una de las fechas no es válida.'); error.statusCode = 400; throw error;
+  }
+  return result;
+}
+
+function cleanList(value, maxItems = 20) {
+  const source = Array.isArray(value) ? value : String(value || '').split(/\r?\n/);
+  return source.map((item) => cleanText(typeof item === 'string' ? item : item?.label || item?.title, 300)).filter(Boolean).slice(0, maxItems);
+}
+
+function requireList(value, label) {
+  const items = cleanList(value);
+  if (!items.length) { const error = new Error(`${label} requiere al menos un elemento.`); error.statusCode = 400; throw error; }
+  return items;
+}
+
+function privateToken() { return crypto.randomBytes(32).toString('base64url'); }
+function tokenHash(token) { return crypto.createHash('sha256').update(token).digest('hex'); }
+function publicBaseUrl() { return String(process.env.DEPLOY_PRIME_URL || process.env.URL || 'https://www.verygoodgraphics.mx').replace(/\/$/, ''); }
 
 function cleanBoolean(value) {
   return value === true || value === 1 || value === 'true' || value === 'on';
@@ -106,7 +144,12 @@ async function toggleTask(payload, profile) {
 async function saveProposal(payload, profile) {
   const leadId = cleanId(payload.lead_id);
   const amount = cleanNumber(payload.amount_mxn, 1);
+  const listPrice = cleanNumber(payload.list_price_mxn || amount, amount);
   const cost = cleanNumber(payload.estimated_cost_mxn, 0);
+  const discountExpiresAt = listPrice > amount ? cleanDate(payload.discount_expires_at) : null;
+  if (listPrice > amount && (!discountExpiresAt || Date.parse(discountExpiresAt) <= Date.now())) {
+    const error = new Error('El descuento debe tener una vigencia futura y auténtica.'); error.statusCode = 400; throw error;
+  }
   const margin = ((amount - cost) / amount) * 100;
   const leadFilter = ownershipFilter(profile);
   const ownedLead = await select('crm_leads', `id=eq.${encodeURIComponent(leadId)}&select=id${leadFilter ? `&${leadFilter}` : ''}`);
@@ -119,6 +162,12 @@ async function saveProposal(payload, profile) {
     lead_id: leadId,
     title: requireValue(payload.title, 'El título', 220),
     scope: requireValue(payload.scope, 'El alcance', 6000),
+    client_message: cleanText(payload.client_message, 1800) || null,
+    deliverables: requireList(payload.deliverables, 'Entregables'), timeline: requireList(payload.timeline, 'La ruta de trabajo'),
+    list_price_mxn: listPrice,
+    discount_label: listPrice > amount ? cleanText(payload.discount_label, 180) || 'Beneficio por decisión ágil' : null,
+    discount_expires_at: discountExpiresAt,
+    payment_url: cleanUrl(payload.payment_url), calendar_url: cleanUrl(payload.calendar_url),
     amount_mxn: amount,
     estimated_cost_mxn: cost,
     margin_percent: Number(margin.toFixed(2)),
@@ -180,6 +229,67 @@ async function savePayment(payload, profile) {
 async function markPaymentPaid(payload, profile) {
   const record = await mustUpdate('crm_payments', cleanId(payload.payment_id), { status: 'paid', paid_at: new Date().toISOString(), recorded_by: profile.id });
   return { message: 'Pago confirmado.', record };
+}
+
+async function generateProposalLink(payload, profile) {
+  const proposalId = cleanId(payload.proposal_id);
+  const [proposal] = await select('crm_proposals', `id=eq.${encodeURIComponent(proposalId)}&select=id,lead_id,status,margin_percent`);
+  if (!proposal) { const error = new Error('La propuesta no existe.'); error.statusCode = 404; throw error; }
+  if (!['approved', 'sent'].includes(proposal.status)) { const error = new Error('Dirección debe aprobar la propuesta antes de generar la liga.'); error.statusCode = 409; throw error; }
+  if (Number(proposal.margin_percent) < 50) { const error = new Error('La propuesta no cumple el margen mínimo de 50%.'); error.statusCode = 409; throw error; }
+  const token = privateToken();
+  const record = await mustUpdate('crm_proposals', proposalId, { private_token_hash: tokenHash(token), status: 'sent', sent_at: new Date().toISOString() });
+  await insert('crm_activities', { lead_id: proposal.lead_id, kind: 'proposal', body: 'Liga privada de propuesta generada por Dirección.', created_by: profile.id });
+  return { message: 'Liga privada generada y copiada.', url: `${publicBaseUrl()}/propuesta.html#t=${encodeURIComponent(token)}`, record };
+}
+
+async function generateKickoff(payload, profile) {
+  const proposalId = cleanId(payload.proposal_id);
+  const [proposal] = await select('crm_proposals', `id=eq.${encodeURIComponent(proposalId)}&select=id,lead_id,title,scope,amount_mxn,estimated_cost_mxn,status,payment_url,calendar_url,deliverables`);
+  if (!proposal) { const error = new Error('La propuesta no existe.'); error.statusCode = 404; throw error; }
+  if (proposal.status !== 'accepted') { const error = new Error('El cliente debe aceptar la propuesta antes de publicar el kickoff.'); error.statusCode = 409; throw error; }
+  const [lead] = await select('crm_leads', `id=eq.${encodeURIComponent(proposal.lead_id)}&select=id,contact_name,company,email,phone,service,owner_id`);
+  if (!lead) { const error = new Error('No se encontró el prospecto relacionado.'); error.statusCode = 404; throw error; }
+
+  let [client] = await select('crm_clients', `lead_id=eq.${encodeURIComponent(lead.id)}&select=*`);
+  if (!client) [client] = await insert('crm_clients', { name: lead.company || lead.contact_name, contact_name: lead.contact_name, email: lead.email, phone: lead.phone, lead_id: lead.id, owner_id: lead.owner_id || profile.id });
+
+  let [project] = await select('crm_projects', `proposal_id=eq.${encodeURIComponent(proposal.id)}&select=*`);
+  const dueDate = cleanDate(payload.due_date);
+  if (!project) [project] = await insert('crm_projects', {
+    client_id: client.id, proposal_id: proposal.id, name: cleanText(payload.project_name, 220) || proposal.title,
+    service: lead.service || 'Proyecto VGG', status: 'kickoff', progress: 5, due_date: dueDate,
+    budget_mxn: proposal.amount_mxn, cost_mxn: proposal.estimated_cost_mxn, spent_mxn: 0,
+    owner_id: lead.owner_id || profile.id, created_by: profile.id,
+  });
+  else project = await mustUpdate('crm_projects', project.id, {
+    name: cleanText(payload.project_name, 220) || proposal.title, due_date: dueDate,
+    budget_mxn: proposal.amount_mxn, cost_mxn: proposal.estimated_cost_mxn,
+  });
+
+  const depositPercent = cleanNumber(payload.deposit_percent === '' || payload.deposit_percent == null ? 50 : payload.deposit_percent, 0, 100);
+  const paymentUrl = cleanUrl(payload.payment_url || proposal.payment_url);
+  const calendarUrl = cleanUrl(payload.calendar_url || proposal.calendar_url);
+  const token = privateToken();
+  const objectives = requireList(payload.objectives, 'Objetivos');
+  const deliverables = requireList(payload.deliverables || proposal.deliverables, 'Entregables');
+  const processSteps = requireList(payload.process_steps, 'El proceso');
+  const row = {
+    proposal_id: proposal.id, project_id: project.id, token_hash: tokenHash(token),
+    headline: cleanText(payload.headline, 240) || `El siguiente paso para ${lead.company || lead.contact_name}`,
+    objectives, deliverables, process_steps: processSteps, deposit_percent: depositPercent,
+    payment_url: paymentUrl, calendar_url: calendarUrl, start_date: cleanDate(payload.start_date), due_date: dueDate,
+    status: 'published', created_by: profile.id,
+  };
+  const [existing] = await select('crm_kickoffs', `proposal_id=eq.${encodeURIComponent(proposal.id)}&select=id`);
+  const kickoff = existing ? await mustUpdate('crm_kickoffs', existing.id, row) : (await insert('crm_kickoffs', row))[0];
+  const paymentRows = await select('crm_payments', `project_id=eq.${encodeURIComponent(project.id)}&select=id&limit=1`);
+  if (!paymentRows.length && depositPercent > 0) await insert('crm_payments', {
+    project_id: project.id, concept: `Anticipo ${depositPercent}%`, amount_mxn: Number((Number(proposal.amount_mxn) * depositPercent / 100).toFixed(2)),
+    due_date: new Date().toISOString().slice(0, 10), status: 'pending', created_by: profile.id,
+  });
+  await insert('crm_activities', { lead_id: lead.id, project_id: project.id, kind: 'kickoff', body: 'Kickoff privado publicado por Dirección.', created_by: profile.id });
+  return { message: 'Kickoff generado y liga copiada.', url: `${publicBaseUrl()}/kickoff.html#t=${encodeURIComponent(token)}`, record: kickoff };
 }
 
 function cleanSlug(value) {
@@ -256,6 +366,8 @@ const ACTIONS = {
   toggle_task: { roles: ['owner', 'sales', 'production'], run: toggleTask },
   save_proposal: { roles: ['owner', 'sales'], run: saveProposal },
   approve_proposal: { roles: ['owner'], run: approveProposal },
+  generate_proposal_link: { roles: ['owner'], run: generateProposalLink },
+  generate_kickoff: { roles: ['owner'], run: generateKickoff },
   save_project: { roles: ['owner'], run: saveProject },
   save_payment: { roles: ['owner'], run: savePayment },
   mark_payment_paid: { roles: ['owner'], run: markPaymentPaid },

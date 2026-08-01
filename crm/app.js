@@ -41,7 +41,7 @@
   function emptyState() {
     return {
       profile: null,
-      leads: [], clients: [], proposals: [], projects: [], tasks: [], payments: [], activities: [], profiles: [], forms: [], assignment_rules: [], form_submissions: [],
+      leads: [], clients: [], proposals: [], projects: [], tasks: [], payments: [], activities: [], profiles: [], forms: [], assignment_rules: [], form_submissions: [], kickoffs: [],
       system: { database: false, form: false, automation: false },
     };
   }
@@ -308,8 +308,13 @@
     $('#proposal-grid').innerHTML = state.proposals.length ? state.proposals.map((proposal) => {
       const lead = leadById(proposal.lead_id);
       const margin = Number(proposal.margin_percent ?? percent(proposal.amount_mxn, proposal.estimated_cost_mxn));
+      const listPrice = Number(proposal.list_price_mxn || proposal.amount_mxn || 0);
+      const savings = Math.max(0, listPrice - Number(proposal.amount_mxn || 0));
       const canApprove = state.profile?.role === 'owner' && proposal.status === 'draft' && margin >= 50;
-      return `<article class="proposal-card"><header><div><h3>${safe(proposal.title)}</h3><p>${safe(lead?.company || lead?.contact_name || 'Prospecto')}</p></div><span class="tag ${proposal.status === 'accepted' ? 'green' : 'purple'}">${safe(PROPOSAL_NAMES[proposal.status] || proposal.status)}</span></header><p>${safe(proposal.scope || 'Alcance por completar.')}</p><div class="proposal-numbers"><div><small>PRECIO</small><b>${money.format(proposal.amount_mxn || 0)}</b></div><div><small>MARGEN</small><b class="${margin >= 50 ? '' : 'danger'}">${margin.toFixed(0)}%</b></div></div><footer><small>${margin >= 50 ? 'Cumple objetivo VGG' : 'Requiere ajustar precio o costo'}</small>${canApprove ? `<button class="text-action" data-approve-proposal="${safe(proposal.id)}">Aprobar →</button>` : ''}</footer></article>`;
+      const canShare = state.profile?.role === 'owner' && ['approved', 'sent'].includes(proposal.status);
+      const canKickoff = state.profile?.role === 'owner' && proposal.status === 'accepted';
+      const kickoff = state.kickoffs.find((item) => item.proposal_id === proposal.id);
+      return `<article class="proposal-card"><header><div><h3>${safe(proposal.title)}</h3><p>${safe(lead?.company || lead?.contact_name || 'Prospecto')}</p></div><span class="tag ${proposal.status === 'accepted' ? 'green' : 'purple'}">${safe(PROPOSAL_NAMES[proposal.status] || proposal.status)}</span></header><p>${safe(proposal.scope || 'Alcance por completar.')}</p>${savings ? `<div class="discount-chip"><b>${money.format(savings)} de ahorro</b><span>${safe(proposal.discount_label || 'Beneficio comercial')} · hasta ${fmtDate(proposal.discount_expires_at, true)}</span></div>` : ''}<div class="proposal-numbers"><div><small>PRECIO FINAL</small><b>${money.format(proposal.amount_mxn || 0)}</b>${savings ? `<s>${money.format(listPrice)}</s>` : ''}</div><div><small>MARGEN</small><b class="${margin >= 50 ? '' : 'danger'}">${margin.toFixed(0)}%</b></div></div><footer><small>${proposal.accepted_at ? `Aceptada ${fmtDate(proposal.accepted_at, true)}` : proposal.client_viewed_at ? `Vista ${fmtDate(proposal.client_viewed_at, true)}` : margin >= 50 ? 'Cumple objetivo VGG' : 'Requiere ajustar precio o costo'}</small><div class="proposal-actions">${canApprove ? `<button class="text-action" data-approve-proposal="${safe(proposal.id)}">Aprobar →</button>` : ''}${canShare ? `<button class="text-action" data-share-proposal="${safe(proposal.id)}">${proposal.status === 'sent' ? 'Regenerar liga' : 'Generar liga'} →</button>` : ''}${canKickoff ? `<button class="text-action" data-open="kickoff-dialog" data-proposal-context="${safe(proposal.id)}">${kickoff ? 'Regenerar kickoff' : 'Generar kickoff'} →</button>` : ''}</div></footer></article>`;
     }).join('') : empty('Crea la primera propuesta desde una oportunidad calificada.');
   }
 
@@ -389,6 +394,7 @@
     const owners = state.profiles.filter((item) => item.active && ['owner', 'sales'].includes(item.role));
     const attribution = [lead.utm_source && `utm_source=${lead.utm_source}`, lead.utm_campaign && `utm_campaign=${lead.utm_campaign}`, lead.landing_url].filter(Boolean).join(' · ');
     $('#lead-detail').innerHTML = `<section class="lead-hero"><p class="eyebrow">${safe(stageName(lead.stage))}</p><h2>${safe(lead.company || lead.contact_name)}</h2><p>${safe(lead.contact_name)} · ${safe(lead.email)}${lead.phone ? ` · ${safe(lead.phone)}` : ''}</p></section><div class="lead-meta"><div><small>SERVICIO</small><b>${safe(lead.service || 'Por definir')}</b></div><div><small>PRESUPUESTO</small><b>${safe(lead.budget_range || 'Sin definir')}</b></div><div><small>ORIGEN</small><b>${safe(lead.source || 'Manual')}</b></div><div><small>SCORE</small><b>${Number(lead.score || 0)} / 100</b></div></div><p>${safe(lead.message || 'Sin contexto registrado.')}</p><div class="drawer-actions">${STAGES.map(([stage, label]) => `<button class="button ${lead.stage === stage ? 'primary' : 'ghost'}" data-change-stage="${stage}" ${lead.stage === stage ? 'disabled' : ''}>${safe(label)}</button>`).join('')}</div><div class="timeline"><p class="eyebrow">HISTORIAL</p>${activities.length ? activities.map((activity) => `<article class="timeline-item"><b>${safe(activity.kind === 'stage_change' ? 'Cambio de etapa' : activity.kind === 'proposal' ? 'Propuesta' : 'Nota')}</b><p>${safe(activity.body)}</p><time>${fmtDate(activity.created_at)}</time></article>`).join('') : empty('Aún no hay actividad registrada.')}</div>`;
+    if (['owner', 'sales'].includes(state.profile?.role)) $('#lead-detail').insertAdjacentHTML('beforeend', `<button class="button primary" data-open="proposal-dialog" data-lead-context="${safe(lead.id)}">Generar propuesta para este prospecto →</button>`);
     if (state.profile?.role === 'owner') $('#lead-detail').insertAdjacentHTML('beforeend', `<div class="assignment-box"><label>Responsable<select data-assign-lead="${safe(lead.id)}"><option value="">Sin asignar</option>${owners.map((owner) => `<option value="${safe(owner.id)}" ${lead.owner_id === owner.id ? 'selected' : ''}>${safe(owner.full_name || owner.email)}</option>`).join('')}</select></label></div>`);
     if (attribution) $('#lead-detail').insertAdjacentHTML('beforeend', `<div class="attribution-box"><p class="eyebrow">ATRIBUCIÓN</p><p>${safe(attribution)}</p></div>`);
     $('#lead-drawer').classList.add('open');
@@ -447,12 +453,13 @@
         localMutation?.();
         renderAll();
         notify('Demo actualizada temporalmente. No se guardaron datos reales.');
-        return;
+        return null;
       }
       const result = await api('action', { method: 'POST', body: JSON.stringify({ action, payload }) });
       await loadData();
       renderAll();
       notify(result.message || 'Cambio guardado.');
+      return result;
     } catch (error) {
       notify(error.message);
       throw error;
@@ -466,9 +473,12 @@
     if (submit === 'create-lead') {
       await mutate('create_lead', values, () => state.leads.unshift({ id: id(), ...values, stage: 'new', priority: 'normal', score: 45, source: 'Captura manual', created_at: new Date().toISOString(), next_action_at: new Date().toISOString() }));
     } else if (submit === 'save-proposal') {
-      const proposal = { ...values, amount_mxn: Number(values.amount_mxn), estimated_cost_mxn: Number(values.estimated_cost_mxn) };
+      const proposal = { ...values, list_price_mxn: Number(values.list_price_mxn), amount_mxn: Number(values.amount_mxn), estimated_cost_mxn: Number(values.estimated_cost_mxn), discount_expires_at: values.discount_expires_at ? new Date(values.discount_expires_at).toISOString() : null };
       proposal.margin_percent = percent(proposal.amount_mxn, proposal.estimated_cost_mxn);
       await mutate('save_proposal', proposal, () => state.proposals.unshift({ id: id(), ...proposal, status: 'draft', created_at: new Date().toISOString() }));
+    } else if (submit === 'generate-kickoff') {
+      const result = await mutate('generate_kickoff', { ...values, deposit_percent: Number(values.deposit_percent) });
+      if (result?.url) await copyPrivateLink(result.url);
     } else if (submit === 'save-project') {
       const project = { ...values, budget_mxn: Number(values.budget_mxn || 0), cost_mxn: Number(values.cost_mxn || 0) };
       await mutate('save_project', project, () => state.projects.unshift({ id: id(), ...project, status: 'kickoff', progress: 5, spent_mxn: 0 }));
@@ -496,7 +506,10 @@
       const viewButton = event.target.closest('[data-view], [data-view-target]');
       if (viewButton) return switchView(viewButton.dataset.view || viewButton.dataset.viewTarget);
       const openButton = event.target.closest('[data-open]');
-      if (openButton) return $(`#${openButton.dataset.open}`).showModal();
+      if (openButton) {
+        prepareDialog(openButton);
+        return $(`#${openButton.dataset.open}`).showModal();
+      }
       const leadButton = event.target.closest('[data-lead-id]');
       if (leadButton) return renderLeadDetail(leadButton.dataset.leadId);
       const attentionButton = event.target.closest('[data-attention]');
@@ -519,6 +532,11 @@
         const proposal = state.proposals.find((item) => item.id === proposalButton.dataset.approveProposal);
         if (!proposal) return;
         return mutate('approve_proposal', { proposal_id: proposal.id }, () => { proposal.status = 'approved'; });
+      }
+      const shareButton = event.target.closest('[data-share-proposal]');
+      if (shareButton) {
+        const result = await mutate('generate_proposal_link', { proposal_id: shareButton.dataset.shareProposal });
+        if (result?.url) await copyPrivateLink(result.url);
       }
     });
 
@@ -563,6 +581,34 @@
     const strong = $('#proposal-margin-preview strong');
     strong.textContent = form.elements.amount_mxn.value ? `${value.toFixed(0)}%` : '—';
     strong.style.color = value >= 50 ? 'var(--lime)' : 'var(--red)';
+  }
+
+  function prepareDialog(button) {
+    if (button.dataset.open === 'proposal-dialog' && button.dataset.leadContext) $('#proposal-lead').value = button.dataset.leadContext;
+    if (button.dataset.open !== 'kickoff-dialog') return;
+    const proposal = state.proposals.find((item) => item.id === button.dataset.proposalContext);
+    if (!proposal) return;
+    const lead = leadById(proposal.lead_id) || {};
+    const form = $('#kickoff-dialog form');
+    form.reset();
+    form.elements.proposal_id.value = proposal.id;
+    form.elements.project_name.value = proposal.title;
+    form.elements.headline.value = `El siguiente paso para ${lead.company || lead.contact_name || 'tu proyecto'}`;
+    form.elements.objectives.value = proposal.client_message || proposal.scope || '';
+    form.elements.deliverables.value = (proposal.deliverables || []).join('\n');
+    form.elements.process_steps.value = (proposal.timeline || []).join('\n');
+    form.elements.deposit_percent.value = 50;
+    form.elements.payment_url.value = proposal.payment_url || '';
+    form.elements.calendar_url.value = proposal.calendar_url || '';
+  }
+
+  async function copyPrivateLink(url) {
+    try {
+      await navigator.clipboard.writeText(url);
+      notify('Liga privada copiada. Compártela únicamente con el cliente.');
+    } catch (_) {
+      window.prompt('Copia la liga privada:', url);
+    }
   }
 
   async function login(event) {

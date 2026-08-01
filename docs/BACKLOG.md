@@ -18,8 +18,8 @@
 - [ ] Plantillas de correo transaccional con dominio VGG.
 - [ ] Confirmación automática de recepción.
 - [ ] Secuencias con pausa inmediata ante respuesta, baja o rebote.
-- [ ] Vista de aprobación y envío de propuesta privada.
-- [ ] Aceptación, anticipo y kickoff asistidos.
+- [x] Vista de aprobación y envío de propuesta privada.
+- [x] Aceptación, anticipo y kickoff asistidos.
 - [ ] Bitácora visible de automatizaciones y reintentos.
 
 ## Campañas
