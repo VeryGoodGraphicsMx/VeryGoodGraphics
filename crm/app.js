@@ -27,6 +27,7 @@
 
   let client = null;
   let accessToken = '';
+  let recoveryMode = /(?:^|[&#?])type=recovery(?:&|$)/.test(`${location.search}${location.hash}`);
   let currentView = 'dashboard';
   let selectedLeadId = null;
   let toastTimer = null;
@@ -145,18 +146,26 @@
       client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
       });
+      client.auth.onAuthStateChange((event, sessionValue) => {
+        if (event === 'SIGNED_OUT') return showAuth();
+        if (sessionValue?.access_token) accessToken = sessionValue.access_token;
+        if (event === 'PASSWORD_RECOVERY') {
+          recoveryMode = true;
+          showPasswordRecovery();
+        }
+      });
       const { data: { session } } = await client.auth.getSession();
-      if (session) {
+      if (recoveryMode) {
+        if (!session) throw new Error('El enlace de recuperación expiró o ya fue utilizado. Solicita uno nuevo.');
+        accessToken = session.access_token;
+        showPasswordRecovery();
+      } else if (session) {
         accessToken = session.access_token;
         await loadData();
         showApp();
       } else {
         showAuth();
       }
-      client.auth.onAuthStateChange(async (event, sessionValue) => {
-        if (event === 'SIGNED_OUT') return showAuth();
-        if (sessionValue?.access_token) accessToken = sessionValue.access_token;
-      });
     } catch (error) {
       showAuth(error.message);
     }
@@ -171,7 +180,19 @@
     document.body.classList.remove('is-loading');
     $('#app-shell').hidden = true;
     $('#auth-shell').hidden = false;
+    $('#login-panel').hidden = false;
+    $('#password-recovery-panel').hidden = true;
     $('#auth-message').textContent = message;
+  }
+
+  function showPasswordRecovery(message = '') {
+    document.body.classList.remove('is-loading');
+    $('#app-shell').hidden = true;
+    $('#auth-shell').hidden = false;
+    $('#login-panel').hidden = true;
+    $('#password-recovery-panel').hidden = false;
+    $('#password-recovery-message').textContent = message;
+    $('#new-password').focus();
   }
 
   function showApp() {
@@ -477,6 +498,7 @@
     $('#lead-service-filter').addEventListener('change', renderLeads);
     $('#proposal-dialog').addEventListener('input', updateMarginPreview);
     $('#login-form').addEventListener('submit', login);
+    $('#password-recovery-form').addEventListener('submit', saveRecoveredPassword);
     $('#reset-password').addEventListener('click', resetPassword);
     $('#sign-out').addEventListener('click', signOut);
   }
@@ -512,6 +534,38 @@
     if (!email) return $('#auth-message').textContent = 'Escribe tu correo primero.';
     const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/crm/` });
     $('#auth-message').textContent = error ? error.message : 'Revisa tu correo para recuperar el acceso.';
+  }
+
+  async function saveRecoveredPassword(event) {
+    event.preventDefault();
+    const button = event.submitter;
+    const password = $('#new-password').value;
+    const confirmation = $('#confirm-password').value;
+    const message = $('#password-recovery-message');
+    message.textContent = '';
+    if (!client || !recoveryMode) return showAuth('El enlace de recuperación expiró o no es válido. Solicita uno nuevo.');
+    if (password.length < 12) return message.textContent = 'La contraseña debe tener al menos 12 caracteres.';
+    if (password !== confirmation) return message.textContent = 'Las contraseñas no coinciden.';
+    button.disabled = true;
+    try {
+      const { data, error } = await client.auth.updateUser({ password });
+      if (error) throw error;
+      if (!data.user) throw new Error('Supabase no confirmó el cambio de contraseña.');
+      recoveryMode = false;
+      history.replaceState(null, '', location.pathname);
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) throw new Error('La contraseña cambió, pero la sesión expiró. Inicia sesión con tu nueva contraseña.');
+      accessToken = session.access_token;
+      $('#new-password').value = '';
+      $('#confirm-password').value = '';
+      await loadData();
+      showApp();
+      toast('Contraseña actualizada correctamente.');
+    } catch (error) {
+      message.textContent = error.message || 'No fue posible actualizar la contraseña.';
+    } finally {
+      button.disabled = false;
+    }
   }
 
   async function signOut() {

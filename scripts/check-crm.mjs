@@ -20,6 +20,11 @@ const schema = await readFile(resolve(root, 'supabase/schema.sql'), 'utf8');
 
 assert.match(html, /@supabase\/supabase-js@2\.111\.0/);
 assert.match(html, /<meta name="robots" content="noindex,nofollow,noarchive">/);
+assert.match(html, /id="password-recovery-form"/);
+assert.match(html, /id="new-password"[^>]*minlength="12"/);
+assert.match(app, /event === 'PASSWORD_RECOVERY'/);
+assert.match(app, /client\.auth\.updateUser\(\{ password \}\)/);
+assert.match(app, /if \(recoveryMode\)[\s\S]*showPasswordRecovery\(\)/);
 assert.doesNotMatch(`${html}\n${app}`, /VGG_SUPABASE_SECRET_KEY\s*[=:]\s*["'][^"']+/);
 assert.match(schema, /alter table public\.crm_leads enable row level security;/);
 assert.match(schema, /revoke all on table[\s\S]*from anon, authenticated, service_role;/);
