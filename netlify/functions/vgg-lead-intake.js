@@ -48,7 +48,8 @@ function domainAllowed(origin, domains) {
   const current = host(origin);
   return Boolean(current) && Array.isArray(domains) && domains.some((domain) => {
     const allowed = host(String(domain).includes('://') ? domain : `https://${domain}`);
-    return allowed && (current === allowed || current.endsWith(`.${allowed}`));
+    const netlifyDeploy = allowed.endsWith('.netlify.app') && current.endsWith(`--${allowed}`);
+    return allowed && (current === allowed || current.endsWith(`.${allowed}`) || netlifyDeploy);
   });
 }
 function matches(rule, form, body, tracking) {
@@ -111,6 +112,18 @@ exports.handler = async (event) => {
       throw error;
     }
     const score = scoreLead(body);
+    const eventDate = cleanText(body.event_date, 20);
+    if (eventDate && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
+      const error = new Error('La fecha tentativa no es válida.');
+      error.statusCode = 400;
+      throw error;
+    }
+    const context = [
+      cleanText(body.message, 3000),
+      cleanText(body.project_type, 160) && `Tipo de proyecto: ${cleanText(body.project_type, 160)}`,
+      cleanText(body.start_window, 120) && `Ventana de inicio: ${cleanText(body.start_window, 120)}`,
+      eventDate && `Fecha tentativa: ${eventDate}`,
+    ].filter(Boolean).join('\n');
     const rules = await select('crm_assignment_rules', 'active=is.true&select=*&order=priority.asc');
     const rule = rules.find((item) => matches(item, form, body, tracking));
     const ownerId = rule?.assignee_id || form?.default_owner_id || cleanText(process.env.VGG_CRM_DEFAULT_OWNER_ID, 64) || null;
@@ -121,7 +134,7 @@ exports.handler = async (event) => {
       company: cleanText(body.company, 180) || null,
       service,
       budget_range: cleanText(body.budget_range, 100) || null,
-      message: cleanText(body.message, 3000) || null,
+      message: cleanText(context, 3600) || null,
       source: cleanText(body.source, 80) || (form ? 'Formulario web' : 'Sitio web'),
       source_detail: cleanText(body.source_detail, 240) || form?.name || null,
       utm_source: cleanText(tracking.utm_source || body.utm_source, 120) || null,

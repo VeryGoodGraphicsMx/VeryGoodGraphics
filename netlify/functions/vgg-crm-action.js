@@ -12,8 +12,8 @@ const TASK_STATUSES = ['pending', 'done', 'cancelled'];
 const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 const ROLES = ['owner', 'sales', 'production'];
 const TEAMS = ['direction', 'commercial', 'production', 'viewer'];
-const FORM_FIELD_TYPES = ['text', 'email', 'tel', 'textarea', 'select', 'checkbox'];
-const FORM_FIELD_NAMES = ['contact_name', 'email', 'phone', 'company', 'service', 'budget_range', 'message', 'consent'];
+const FORM_FIELD_TYPES = ['text', 'email', 'tel', 'date', 'textarea', 'select', 'checkbox'];
+const FORM_FIELD_NAMES = ['contact_name', 'email', 'phone', 'company', 'service', 'project_type', 'budget_range', 'start_window', 'event_date', 'message', 'consent'];
 
 function cleanUrl(value) {
   const result = cleanText(value, 1000);

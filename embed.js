@@ -56,7 +56,7 @@
   }
 
   function buildField(form, definition, slug) {
-    var wrapper = element('div', { class: 'field' });
+    var wrapper = element('div', { class: 'field field--' + (definition.type || 'text') });
     var id = 'vgg-' + slug + '-' + definition.name;
     var input;
 
@@ -100,14 +100,14 @@
     var root = container.attachShadow ? container.attachShadow({ mode: 'open' }) : container;
     var style = element('style');
     style.textContent =
-      ':host{display:block;color-scheme:dark}*{box-sizing:border-box}.vgg-form{display:grid;gap:15px;font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7f7f2}' +
-      '.intro{margin:0 0 4px;color:#a7aabd;line-height:1.6}.field{display:grid;gap:7px}label{color:#d8dae3;font-size:12px;font-weight:750}' +
+      ':host{display:block;color-scheme:dark}*{box-sizing:border-box}.vgg-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15px;font:15px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f7f7f2}' +
+      '.intro{grid-column:1/-1;margin:0 0 4px;color:#a7aabd;line-height:1.6}.field{display:grid;gap:7px;min-width:0}.field--textarea,.field--checkbox{grid-column:1/-1}label{color:#d8dae3;font-size:12px;font-weight:750}' +
       'input,select,textarea{width:100%;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:13px 14px;background:#11151f;color:#f7f7f2;font:inherit}' +
       'input:focus,select:focus,textarea:focus{outline:2px solid #e8ff00;outline-offset:2px;border-color:#e8ff00}textarea{min-height:118px;resize:vertical}' +
       '.consent{display:flex;align-items:flex-start;gap:10px;line-height:1.5}.consent input{width:auto;margin-top:3px}.consent a{color:#e8ff00}' +
-      'button{min-height:48px;border:0;border-radius:12px;padding:13px 20px;background:#e8ff00;color:#080a10;font-weight:850;font-size:14px;cursor:pointer}' +
-      'button[disabled]{opacity:.58;cursor:wait}.status{min-height:22px;margin:0;color:#a7aabd;font-size:12px}.status[data-state="error"]{color:#ff8491}.status[data-state="success"]{color:#57e389}' +
-      '.hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}';
+      'button{grid-column:1/-1;min-height:48px;border:0;border-radius:12px;padding:13px 20px;background:#e8ff00;color:#080a10;font-weight:850;font-size:14px;cursor:pointer}' +
+      'button[disabled]{opacity:.58;cursor:wait}.status{grid-column:1/-1;min-height:22px;margin:0;color:#a7aabd;font-size:12px}.status[data-state="error"]{color:#ff8491}.status[data-state="success"]{color:#57e389}' +
+      '.hp{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}@media(max-width:620px){.vgg-form{grid-template-columns:1fr}.intro,.field--textarea,.field--checkbox,button,.status{grid-column:auto}}';
     root.appendChild(style);
 
     var form = element('form', { class: 'vgg-form', novalidate: '' });
@@ -119,6 +119,8 @@
     form.appendChild(button);
     form.appendChild(status);
     root.appendChild(form);
+    container.removeAttribute('aria-busy');
+    container.dispatchEvent(new CustomEvent('vgg:form-ready', { detail: { key: config.slug } }));
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
@@ -164,13 +166,17 @@
         });
       })
       .then(function (form) { render(container, form); })
-      .catch(function (error) { container.textContent = error.message; });
+      .catch(function (error) {
+        container.textContent = error.message;
+        container.dispatchEvent(new CustomEvent('vgg:form-error', { detail: { key: key, message: error.message } }));
+      });
   }
 
   function boot() {
     document.querySelectorAll('[data-vgg-form]').forEach(initialize);
   }
 
+  window.VGGForms = { boot: boot };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();

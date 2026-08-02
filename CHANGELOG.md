@@ -19,3 +19,5 @@
 - Se añadió una lectura clara de atribución por formulario, landing, fuente/medio, campaña, contenido, término, referente y click ID.
 - Se preparó el registro idempotente de siete formularios VGG para contacto, video, producto, restaurantes, eventos, fotografía y dron.
 - Se reforzaron los formularios públicos con campos permitidos, dominios normalizados, privacidad HTTPS, honeypot y límite de frecuencia por visitante.
+- Se sustituyó la interfaz visible de los siete formularios públicos por configuraciones administrables desde el CRM, conservando el formulario Netlify oculto como respaldo automático si el runtime del CRM no responde.
+- Se añadieron campos comerciales por vertical —tipo de proyecto, ventana de inicio y fecha tentativa— sin perder landing, referente, UTM ni click ID.

@@ -1,8 +1,8 @@
 'use strict';
 const { response, handleOptions, assertMethod, requestOrigin, select, cleanText, errorResponse } = require('./_vgg-crm-common');
 
-const PUBLIC_FIELD_TYPES = new Set(['text', 'email', 'tel', 'textarea', 'select', 'checkbox']);
-const PUBLIC_FIELD_NAMES = new Set(['contact_name', 'email', 'phone', 'company', 'service', 'budget_range', 'message', 'consent']);
+const PUBLIC_FIELD_TYPES = new Set(['text', 'email', 'tel', 'date', 'textarea', 'select', 'checkbox']);
+const PUBLIC_FIELD_NAMES = new Set(['contact_name', 'email', 'phone', 'company', 'service', 'project_type', 'budget_range', 'start_window', 'event_date', 'message', 'consent']);
 
 function host(value) {
   try { return new URL(value).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) { return ''; }
@@ -12,7 +12,8 @@ function domainAllowed(origin, domains) {
   const current = host(origin);
   return Boolean(current) && Array.isArray(domains) && domains.some((domain) => {
     const allowed = host(String(domain).includes('://') ? domain : `https://${domain}`);
-    return allowed && (current === allowed || current.endsWith(`.${allowed}`));
+    const netlifyDeploy = allowed.endsWith('.netlify.app') && current.endsWith(`--${allowed}`);
+    return allowed && (current === allowed || current.endsWith(`.${allowed}`) || netlifyDeploy);
   });
 }
 

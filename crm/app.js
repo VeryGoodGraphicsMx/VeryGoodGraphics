@@ -22,7 +22,10 @@
     phone: { name: 'phone', label: 'Teléfono', type: 'tel', autocomplete: 'tel' },
     company: { name: 'company', label: 'Empresa', type: 'text', autocomplete: 'organization' },
     service: { name: 'service', label: 'Servicio', type: 'select', options: ['Branding', 'Diseño gráfico', 'Diseño web', 'Fotografía', 'Video', 'Dron', 'Ilustración', 'Marketing', 'Otro'] },
+    project_type: { name: 'project_type', label: 'Tipo de proyecto', type: 'select', options: ['Producto', 'Restaurante u hospitality', 'Evento', 'Corporativo', 'Instalaciones', 'Lifestyle', 'Otro'] },
     budget_range: { name: 'budget_range', label: 'Presupuesto', type: 'select', options: ['$5,000–$15,000 MXN', '$15,000–$35,000 MXN', '$35,000–$75,000 MXN', 'Más de $75,000 MXN', 'Necesito orientación'] },
+    start_window: { name: 'start_window', label: '¿Cuándo quieres iniciar?', type: 'select', options: ['Esta semana', 'En 2–4 semanas', 'En 1–3 meses', 'Solo estoy explorando'] },
+    event_date: { name: 'event_date', label: 'Fecha tentativa', type: 'date' },
     message: { name: 'message', label: 'Mensaje', type: 'textarea' },
     consent: { name: 'consent', label: 'Acepto el tratamiento de mis datos', type: 'checkbox', required: true },
   };
@@ -563,7 +566,9 @@
     } else if (submit === 'invite-user') {
       await mutate('invite_user', values);
     } else if (submit === 'save-form') {
-      const optional = $$('[name="field_names"]:checked', form).map((input) => ({ ...FORM_FIELDS[input.value] }));
+      const existingForm = state.forms.find((item) => item.id === values.form_id);
+      const existingFields = new Map((existingForm?.fields || []).map((field) => [field.name, field]));
+      const optional = $$('[name="field_names"]:checked', form).map((input) => ({ ...(existingFields.get(input.value) || FORM_FIELDS[input.value]) }));
       const payload = { ...values, active: form.elements.active.checked, fields: [{ name: 'contact_name', label: 'Nombre', type: 'text', required: true, autocomplete: 'name' }, { name: 'email', label: 'Correo', type: 'email', required: true, autocomplete: 'email' }, ...optional] };
       delete payload.field_names;
       await mutate('save_form', payload, () => {
