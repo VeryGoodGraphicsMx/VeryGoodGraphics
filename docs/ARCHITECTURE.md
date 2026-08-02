@@ -20,7 +20,7 @@ Usuario CRM -> Supabase Auth -> Netlify Functions -> Supabase VGG
 
 - `crm/`: portal privado. Solo recibe la URL y llave publicable de Supabase; nunca una llave secreta.
 - `netlify/functions/`: verifica la sesión, consulta el perfil autorizado y aplica permisos de servidor.
-- `media/lead-form.js`: actúa como mejora progresiva. Selecciona el `slug` según la ruta, monta el formulario generado por el CRM y oculta el formulario Netlify original solo cuando el runtime confirma que está listo; si la configuración o el runtime fallan, retira el montaje y devuelve el formulario Netlify visible y funcional.
+- `media/lead-form.js`: actúa como mejora progresiva. Selecciona el `slug` según la ruta y prepara el formulario generado por el CRM mientras el formulario Netlify original continúa visible y funcional. Solo intercambia ambos cuando el runtime confirma que está listo; si la configuración falla, excede el tiempo de espera o el visitante ya interactuó con el respaldo, cancela el intercambio sin perder datos.
 - `embed.js`: carga por `slug` una configuración pública saneada, genera el formulario dentro de Shadow DOM y conserva visitante, sesión, landing, referente, UTM y click IDs.
 - `crm_forms` + `crm_form_submissions`: separan la definición reutilizable del formulario de cada entrada; el prospecto conserva `form_id` para navegar desde la oportunidad hasta su origen.
 - `supabase/schema.sql`: base operativa independiente con RLS activado y acceso directo revocado para `anon` y `authenticated`.

@@ -22,7 +22,8 @@
   }
 
   function restore(entry) {
-    if (!entry || !entry.form) return;
+    if (!entry || !entry.form || entry.active) return;
+    entry.restored = true;
     clearTimeout(entry.fallbackTimer);
     entry.generated.remove();
     entry.form.hidden = false;
@@ -41,18 +42,24 @@
     generated.className = 'vgg-generated-form';
     generated.setAttribute('data-vgg-form', key);
     generated.setAttribute('aria-busy', 'true');
+    generated.setAttribute('aria-hidden', 'true');
+    generated.hidden = true;
     generated.innerHTML = '<p class="vgg-form-loading">Cargando formulario seguro…</p>';
     form.insertAdjacentElement('beforebegin', generated);
-    form.hidden = true;
-    form.setAttribute('aria-hidden', 'true');
     form.setAttribute('data-vgg-fallback', '');
-    var entry = { form: form, generated: generated };
+    var entry = { form: form, generated: generated, active: false, restored: false };
     entry.fallbackTimer = setTimeout(function () { restore(entry); }, 8000);
     upgraded.push(entry);
 
     generated.addEventListener('vgg:form-ready', function () {
+      if (entry.restored) return;
+      entry.active = true;
       clearTimeout(entry.fallbackTimer);
       generated.removeAttribute('aria-busy');
+      generated.removeAttribute('aria-hidden');
+      generated.hidden = false;
+      form.hidden = true;
+      form.setAttribute('aria-hidden', 'true');
     }, { once: true });
     generated.addEventListener('vgg:form-error', function () {
       restore(entry);
@@ -60,6 +67,8 @@
     generated.addEventListener('vgg:form-submitted', function () {
       location.assign(thanksUrl(form));
     }, { once: true });
+    form.addEventListener('focusin', function () { restore(entry); }, { once: true });
+    form.addEventListener('input', function () { restore(entry); }, { once: true });
   }
 
   document.querySelectorAll('form[data-vgg-lead-form]').forEach(upgrade);
