@@ -14,6 +14,7 @@ const pages = [
   'servicios/fotografia.html',
   'servicios/dron.html',
 ];
+const generatedFormPages = pages.filter((page) => page !== 'gracias.html');
 
 for (const page of pages) {
   const file = resolve(root, page);
@@ -22,6 +23,8 @@ for (const page of pages) {
   if (page !== 'gracias.html') {
     assert.match(html, /<h1[\s>]/, `${page}: H1 missing`);
     assert.match(html, /<link rel="canonical" href="https:\/\/www\.verygoodgraphics\.mx\//, `${page}: canonical must use www`);
+    assert.match(html, /<form[^>]*data-vgg-lead-form/, `${page}: progressive form fallback missing`);
+    assert.match(html, /lead-form\.js/, `${page}: generated-form upgrader missing`);
   }
 
   for (const match of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
@@ -37,6 +40,8 @@ for (const page of pages) {
     await access(destination).catch(() => assert.fail(`${page}: missing local reference ${reference}`));
   }
 }
+
+assert.equal(generatedFormPages.length, 7);
 
 for (const page of pages.filter((name) => name.startsWith('servicios/'))) {
   const html = await readFile(resolve(root, page), 'utf8');

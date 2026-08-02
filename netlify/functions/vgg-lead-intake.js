@@ -43,7 +43,15 @@ function scoreLead(body) {
   return Math.min(100, score);
 }
 
-function host(value) { try { return new URL(value).hostname.toLowerCase(); } catch (_) { return ''; } }
+function host(value) { try { return new URL(value).hostname.toLowerCase().replace(/^www\./, ''); } catch (_) { return ''; } }
+function domainAllowed(origin, domains) {
+  const current = host(origin);
+  return Boolean(current) && Array.isArray(domains) && domains.some((domain) => {
+    const allowed = host(String(domain).includes('://') ? domain : `https://${domain}`);
+    const netlifyDeploy = allowed.endsWith('.netlify.app') && current.endsWith(`--${allowed}`);
+    return allowed && (current === allowed || current.endsWith(`.${allowed}`) || netlifyDeploy);
+  });
+}
 function matches(rule, form, body, tracking) {
   return (!rule.form_id || rule.form_id === form?.id) && (!rule.service || rule.service === body.service) &&
     (!rule.utm_source || rule.utm_source.toLowerCase() === String(tracking.utm_source || '').toLowerCase()) &&
@@ -74,14 +82,29 @@ exports.handler = async (event) => {
       const key = cleanText(request.form_key || request.form_id, 80);
       [form] = await select('crm_forms', `slug=eq.${encodeURIComponent(key)}&active=is.true&select=*`);
       if (!form) { const error = new Error('Formulario no disponible.'); error.statusCode = 404; throw error; }
-      const domain = host(tracking.page_url) || requestOrigin(event).replace(/^https?:\/\//, '');
-      if (!form.allowed_domains.includes(domain)) { const error = new Error('Dominio no autorizado para este formulario.'); error.statusCode = 403; throw error; }
+      const submittedOrigin = requestOrigin(event);
+      const submittedPage = cleanText(tracking.page_url, 1000);
+      if ((!submittedOrigin && !submittedPage)
+        || (submittedOrigin && !domainAllowed(submittedOrigin, form.allowed_domains))
+        || (submittedPage && !domainAllowed(submittedPage, form.allowed_domains))) {
+        const error = new Error('Dominio no autorizado para este formulario.'); error.statusCode = 403; throw error;
+      }
       for (const definition of form.fields || []) if (definition.required && !cleanText(fields[definition.name], 3000)) {
         const error = new Error(`${definition.label || definition.name} es obligatorio.`); error.statusCode = 400; throw error;
       }
     } else validateOrigin(event);
     const body = { ...fields, service: fields.service || form?.service };
     if (cleanText(body.website || body.company_url, 200)) return response(event, 202, { ok: true });
+    const visitorId = cleanText(tracking.visitor_id, 120);
+    if (visitorId) {
+      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const recent = await select('crm_form_submissions', `visitor_id=eq.${encodeURIComponent(visitorId)}&created_at=gte.${encodeURIComponent(since)}&select=id&limit=6`);
+      if (recent.length >= 5) {
+        const error = new Error('Espera unos minutos antes de enviar otra solicitud.');
+        error.statusCode = 429;
+        throw error;
+      }
+    }
     const service = required(body.service, 'El servicio', 100);
     if (!SERVICES.includes(service)) {
       const error = new Error('El servicio no es válido.');
@@ -89,6 +112,18 @@ exports.handler = async (event) => {
       throw error;
     }
     const score = scoreLead(body);
+    const eventDate = cleanText(body.event_date, 20);
+    if (eventDate && !/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
+      const error = new Error('La fecha tentativa no es válida.');
+      error.statusCode = 400;
+      throw error;
+    }
+    const context = [
+      cleanText(body.message, 3000),
+      cleanText(body.project_type, 160) && `Tipo de proyecto: ${cleanText(body.project_type, 160)}`,
+      cleanText(body.start_window, 120) && `Ventana de inicio: ${cleanText(body.start_window, 120)}`,
+      eventDate && `Fecha tentativa: ${eventDate}`,
+    ].filter(Boolean).join('\n');
     const rules = await select('crm_assignment_rules', 'active=is.true&select=*&order=priority.asc');
     const rule = rules.find((item) => matches(item, form, body, tracking));
     const ownerId = rule?.assignee_id || form?.default_owner_id || cleanText(process.env.VGG_CRM_DEFAULT_OWNER_ID, 64) || null;
@@ -99,9 +134,9 @@ exports.handler = async (event) => {
       company: cleanText(body.company, 180) || null,
       service,
       budget_range: cleanText(body.budget_range, 100) || null,
-      message: cleanText(body.message, 3000) || null,
-      source: cleanText(body.source, 80) || 'Sitio web',
-      source_detail: cleanText(body.source_detail, 240) || null,
+      message: cleanText(context, 3600) || null,
+      source: cleanText(body.source, 80) || (form ? 'Formulario web' : 'Sitio web'),
+      source_detail: cleanText(body.source_detail, 240) || form?.name || null,
       utm_source: cleanText(tracking.utm_source || body.utm_source, 120) || null,
       utm_medium: cleanText(tracking.utm_medium || body.utm_medium, 120) || null,
       utm_campaign: cleanText(tracking.utm_campaign || body.utm_campaign, 180) || form?.campaign || null,
@@ -125,7 +160,7 @@ exports.handler = async (event) => {
       form_id: form?.id || null,
       form_name: form?.name || cleanText(body.form_name, 120) || 'contacto-vgg',
       page_path: row.landing_path,
-      visitor_id: cleanText(tracking.visitor_id, 120) || null, session_id: cleanText(tracking.session_id, 120) || null,
+      visitor_id: visitorId || null, session_id: cleanText(tracking.session_id, 120) || null,
       page_url: row.landing_url, page_title: cleanText(tracking.page_title, 300) || null, referrer_url: row.referrer_url,
       domain: host(tracking.page_url) || null, user_agent: cleanText(event.headers?.['user-agent'], 500) || null,
       utm_source: cleanText(tracking.utm_source, 120) || null, utm_medium: cleanText(tracking.utm_medium, 120) || null,

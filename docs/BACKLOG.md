@@ -12,6 +12,9 @@
 - [x] Configurar variables VGG en Netlify y probar login real.
 - [ ] Validar un envío completo desde producción y confirmar `VGG_CRM_FORM_ENABLED=true`.
 - [x] Conectar los formularios del sitio conservando Netlify Forms como respaldo durante la transición.
+- [x] Portar el generador VGG con edición, código embebible y atribución visible en cada lead.
+- [x] Aplicar en Supabase VGG el registro de los siete formularios administrables.
+- [ ] Verificar una entrada real identificada por cada vertical prioritaria después del despliegue web.
 
 ## Segunda fase
 
