@@ -3,6 +3,11 @@
   functions = "netlify/functions"
 
 [[redirects]]
+  from = "/crm/gracias.html"
+  to = "/gracias.html"
+  status = 200
+
+[[redirects]]
   from = "/api/vgg-form-config"
   to = "/.netlify/functions/vgg-form-config"
   status = 200
