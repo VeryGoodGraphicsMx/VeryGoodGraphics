@@ -19,9 +19,12 @@
   const PRIORITY_NAMES = { low: 'Baja', normal: 'Normal', high: 'Alta', urgent: 'Urgente' };
   const PROPOSAL_NAMES = { draft: 'Borrador', approved: 'Aprobada internamente', sent: 'Enviada', accepted: 'Aceptada', rejected: 'Rechazada' };
   const FORM_FIELDS = {
-    phone: { name: 'phone', label: 'Teléfono', type: 'tel' }, company: { name: 'company', label: 'Empresa', type: 'text' },
-    service: { name: 'service', label: 'Servicio', type: 'text' }, budget_range: { name: 'budget_range', label: 'Presupuesto', type: 'text' },
+    phone: { name: 'phone', label: 'Teléfono', type: 'tel', autocomplete: 'tel' },
+    company: { name: 'company', label: 'Empresa', type: 'text', autocomplete: 'organization' },
+    service: { name: 'service', label: 'Servicio', type: 'select', options: ['Branding', 'Diseño gráfico', 'Diseño web', 'Fotografía', 'Video', 'Dron', 'Ilustración', 'Marketing', 'Otro'] },
+    budget_range: { name: 'budget_range', label: 'Presupuesto', type: 'select', options: ['$5,000–$15,000 MXN', '$15,000–$35,000 MXN', '$35,000–$75,000 MXN', 'Más de $75,000 MXN', 'Necesito orientación'] },
     message: { name: 'message', label: 'Mensaje', type: 'textarea' },
+    consent: { name: 'consent', label: 'Acepto el tratamiento de mis datos', type: 'checkbox', required: true },
   };
   const money = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
   const date = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -63,7 +66,7 @@
         { id: 'lead-1', contact_name: 'Mariana Torres', company: 'Nébula Café', email: 'mariana@ejemplo.mx', phone: '55 0000 1001', service: 'Branding', budget_range: '$35,000–$75,000 MXN', stage: 'negotiation', priority: 'urgent', score: 91, source: 'Sitio web', message: 'Nueva marca de café y empaque para lanzamiento nacional.', created_at: isoDays(-7), next_action_at: isoDays(0) },
         { id: 'lead-2', contact_name: 'Eduardo Peña', company: 'Atlas Legal', email: 'eduardo@ejemplo.mx', phone: '55 0000 1002', service: 'Diseño web', budget_range: '$35,000–$75,000 MXN', stage: 'proposal', priority: 'high', score: 84, source: 'Referido', message: 'Sitio institucional con contenido y captación de prospectos.', created_at: isoDays(-5), next_action_at: isoDays(1) },
         { id: 'lead-3', contact_name: 'Sofía Mendoza', company: 'Casa Lumen', email: 'sofia@ejemplo.mx', phone: '55 0000 1003', service: 'Fotografía', budget_range: '$15,000–$35,000 MXN', stage: 'qualified', priority: 'high', score: 77, source: 'Instagram', message: 'Fotografía para catálogo de temporada.', created_at: isoDays(-3), next_action_at: isoDays(2) },
-        { id: 'lead-4', contact_name: 'Andrés Villar', company: 'Estudio Norte', email: 'andres@ejemplo.mx', phone: '55 0000 1004', service: 'Video', budget_range: '$15,000–$35,000 MXN', stage: 'contacted', priority: 'normal', score: 66, source: 'Sitio web', message: 'Video corto de presentación del despacho.', created_at: isoDays(-2), next_action_at: isoDays(0) },
+        { id: 'lead-4', contact_name: 'Andrés Villar', company: 'Estudio Norte', email: 'andres@ejemplo.mx', phone: '55 0000 1004', service: 'Video', budget_range: '$15,000–$35,000 MXN', stage: 'contacted', priority: 'normal', score: 66, source: 'Formulario web', source_detail: 'Video y fotografía de producto', form_id: 'form-demo', landing_path: '/servicios/video-producto.html', landing_url: 'https://www.verygoodgraphics.mx/servicios/video-producto.html?utm_source=google&utm_medium=cpc&utm_campaign=producto', utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'producto', message: 'Video corto de presentación del despacho.', created_at: isoDays(-2), next_action_at: isoDays(0) },
         { id: 'lead-5', contact_name: 'Paola Ríos', company: 'Taller Origen', email: 'paola@ejemplo.mx', phone: '', service: 'Diseño gráfico', budget_range: '$5,000–$15,000 MXN', stage: 'new', priority: 'normal', score: 48, source: 'Cotizador', message: 'Piezas mensuales para redes.', created_at: isoDays(-1), next_action_at: isoDays(0) },
         { id: 'lead-6', contact_name: 'Carlos Suárez', company: 'Ruta Viva', email: 'carlos@ejemplo.mx', phone: '55 0000 1006', service: 'Dron', budget_range: 'Más de $75,000 MXN', stage: 'won', priority: 'high', score: 96, source: 'Referido', message: 'Producción audiovisual para campaña turística.', created_at: isoDays(-22), next_action_at: null },
       ],
@@ -100,6 +103,12 @@
         { id: 'activity-2', lead_id: 'lead-1', kind: 'stage_change', body: 'El prospecto pasó a negociación.', created_at: isoDays(-2) },
         { id: 'activity-3', lead_id: 'lead-2', kind: 'proposal', body: 'Propuesta aprobada internamente; lista para envío.', created_at: isoDays(-1) },
       ],
+      forms: [
+        { id: 'form-demo', slug: 'vgg-video-producto', name: 'Video y fotografía de producto', description: 'Landing enfocada en producto y e-commerce.', campaign: 'SEO audiovisual · Producto', service: 'Video', active: true, allowed_domains: ['verygoodgraphics.mx'], fields: [{ name: 'contact_name', label: 'Nombre', type: 'text', required: true }, { name: 'email', label: 'Correo', type: 'email', required: true }, { ...FORM_FIELDS.phone }, { ...FORM_FIELDS.company }, { ...FORM_FIELDS.budget_range }, { ...FORM_FIELDS.message, required: true }], submit_label: 'Recibir ruta de producción', success_message: 'Gracias. Recibimos tu solicitud.', privacy_url: null, default_owner_id: 'demo-owner', created_at: isoDays(-12) },
+      ],
+      form_submissions: [
+        { id: 'submission-demo', lead_id: 'lead-4', form_id: 'form-demo', form_name: 'Video y fotografía de producto', page_path: '/servicios/video-producto.html', page_url: 'https://www.verygoodgraphics.mx/servicios/video-producto.html?utm_source=google&utm_campaign=producto', domain: 'verygoodgraphics.mx', utm_source: 'google', utm_medium: 'cpc', utm_campaign: 'producto', created_at: isoDays(-2) },
+      ],
       system: { database: false, form: false, automation: false },
     };
   }
@@ -118,8 +127,21 @@
   const leadById = (leadId) => state.leads.find((lead) => lead.id === leadId);
   const clientById = (clientId) => state.clients.find((client) => client.id === clientId);
   const projectById = (projectId) => state.projects.find((project) => project.id === projectId);
+  const formById = (formId) => state.forms.find((form) => form.id === formId);
   const relationName = (item) => leadById(item.lead_id)?.company || projectById(item.project_id)?.name || 'General';
   const initials = (name = 'VGG') => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+  const formSnippet = (slug) => `<div data-vgg-form="${slug}"></div>\n<script async src="https://www.verygoodgraphics.mx/embed.js"><\/script>`;
+  const formSlug = (value = '') => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+
+  function pageLabel(value) {
+    if (!value) return '—';
+    try {
+      const url = new URL(value, location.origin);
+      return `${url.pathname}${url.search}`;
+    } catch (_) {
+      return String(value);
+    }
+  }
 
   function notify(message) {
     const toast = $('#toast');
@@ -260,6 +282,7 @@
     renderFinance();
     renderTeam();
     renderForms();
+    renderFormSubmissions();
     renderAssignment();
     fillRelations();
     $('#nav-lead-count').textContent = state.leads.filter((lead) => !['won', 'lost'].includes(lead.stage)).length;
@@ -400,9 +423,20 @@
   function renderForms() {
     const target = $('#forms-list'); if (!target) return;
     target.innerHTML = state.forms.length ? state.forms.map((form) => {
-      const snippet = `<div data-vgg-form="${form.slug}"></div><script async src="https://www.verygoodgraphics.mx/embed.js"><\/script>`;
-      return `<article class="panel admin-card"><header><div><p class="eyebrow">${safe(form.campaign || 'SIN CAMPAÑA')}</p><h2>${safe(form.name)}</h2></div><span class="tag ${form.active ? 'green' : 'red'}">${form.active ? 'Activo' : 'Inactivo'}</span></header><p>${safe(form.description || 'Formulario embebible con atribución completa.')}</p><dl><div><dt>ID</dt><dd>${safe(form.slug)}</dd></div><div><dt>Dominios</dt><dd>${safe((form.allowed_domains || []).join(', ') || 'Sin dominios')}</dd></div><div><dt>Envíos</dt><dd>${state.form_submissions.filter((item) => item.form_id === form.id).length}</dd></div></dl><code>${safe(snippet)}</code></article>`;
+      const submissions = state.form_submissions.filter((item) => item.form_id === form.id);
+      const lastSubmission = submissions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      return `<article class="panel admin-card"><header><div><p class="eyebrow">${safe(form.campaign || 'SIN CAMPAÑA')}</p><h2>${safe(form.name)}</h2></div><span class="tag ${form.active ? 'green' : 'red'}">${form.active ? 'Activo' : 'Inactivo'}</span></header><p>${safe(form.description || 'Formulario embebible con atribución completa.')}</p><dl><div><dt>ID</dt><dd>${safe(form.slug)}</dd></div><div><dt>Dominios</dt><dd>${safe((form.allowed_domains || []).join(', ') || 'Sin dominios')}</dd></div><div><dt>Envíos</dt><dd>${submissions.length}${lastSubmission ? ` · último ${safe(fmtDate(lastSubmission.created_at, true))}` : ''}</dd></div></dl><code>${safe(formSnippet(form.slug))}</code><div class="card-actions"><button class="button ghost" type="button" data-edit-form="${safe(form.id)}">Editar</button><button class="button primary" type="button" data-copy-form="${safe(form.id)}">Copiar código</button></div></article>`;
     }).join('') : empty('Crea el primer formulario para una landing de VGG.');
+  }
+
+  function renderFormSubmissions() {
+    const target = $('#form-submission-list'); if (!target) return;
+    target.innerHTML = state.form_submissions.length ? state.form_submissions.map((submission) => {
+      const form = formById(submission.form_id);
+      const source = [submission.utm_source, submission.utm_medium].filter(Boolean).join(' / ') || 'Directo';
+      const campaign = submission.utm_campaign || form?.campaign || 'Sin campaña';
+      return `<tr><td><strong>${safe(form?.name || submission.form_name || 'Formulario')}</strong><small>${safe(form?.slug || 'Sin ID')}</small></td><td><strong>${safe(pageLabel(submission.page_path || submission.page_url))}</strong><small>${safe(submission.domain || '')}</small></td><td><strong>${safe(source)}</strong><small>${safe(campaign)}</small></td><td>${safe(fmtDate(submission.created_at))}</td></tr>`;
+    }).join('') : `<tr><td colspan="4">${empty('Las entradas aparecerán aquí con su landing y campaña de origen.')}</td></tr>`;
   }
 
   function renderAssignment() {
@@ -420,11 +454,23 @@
     selectedLeadId = leadId;
     const activities = state.activities.filter((activity) => activity.lead_id === leadId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     const owners = state.profiles.filter((item) => item.active && ['owner', 'sales'].includes(item.role));
-    const attribution = [lead.utm_source && `utm_source=${lead.utm_source}`, lead.utm_campaign && `utm_campaign=${lead.utm_campaign}`, lead.landing_url].filter(Boolean).join(' · ');
+    const sourceForm = formById(lead.form_id);
+    const attribution = [
+      sourceForm && ['Formulario', sourceForm.name],
+      sourceForm?.slug && ['ID del formulario', sourceForm.slug],
+      lead.source_detail && ['Detalle de origen', lead.source_detail],
+      (lead.utm_source || lead.utm_medium) && ['Fuente / medio', [lead.utm_source, lead.utm_medium].filter(Boolean).join(' / ')],
+      (lead.utm_campaign || sourceForm?.campaign) && ['Campaña', lead.utm_campaign || sourceForm.campaign],
+      lead.utm_content && ['Contenido', lead.utm_content],
+      lead.utm_term && ['Término', lead.utm_term],
+      (lead.landing_path || lead.landing_url) && ['Landing', pageLabel(lead.landing_path || lead.landing_url)],
+      lead.referrer_url && ['Referencia', pageLabel(lead.referrer_url)],
+      lead.click_id && ['Click ID', lead.click_id],
+    ].filter(Boolean);
     $('#lead-detail').innerHTML = `<section class="lead-hero"><p class="eyebrow">${safe(stageName(lead.stage))}</p><h2>${safe(lead.company || lead.contact_name)}</h2><p>${safe(lead.contact_name)} · ${safe(lead.email)}${lead.phone ? ` · ${safe(lead.phone)}` : ''}</p></section><div class="lead-meta"><div><small>SERVICIO</small><b>${safe(lead.service || 'Por definir')}</b></div><div><small>PRESUPUESTO</small><b>${safe(lead.budget_range || 'Sin definir')}</b></div><div><small>ORIGEN</small><b>${safe(lead.source || 'Manual')}</b></div><div><small>SCORE</small><b>${Number(lead.score || 0)} / 100</b></div></div><p>${safe(lead.message || 'Sin contexto registrado.')}</p><div class="drawer-actions">${STAGES.map(([stage, label]) => `<button class="button ${lead.stage === stage ? 'primary' : 'ghost'}" data-change-stage="${stage}" ${lead.stage === stage ? 'disabled' : ''}>${safe(label)}</button>`).join('')}</div><div class="timeline"><p class="eyebrow">HISTORIAL</p>${activities.length ? activities.map((activity) => `<article class="timeline-item"><b>${safe(activity.kind === 'stage_change' ? 'Cambio de etapa' : activity.kind === 'proposal' ? 'Propuesta' : 'Nota')}</b><p>${safe(activity.body)}</p><time>${fmtDate(activity.created_at)}</time></article>`).join('') : empty('Aún no hay actividad registrada.')}</div>`;
     if (['owner', 'sales'].includes(state.profile?.role)) $('#lead-detail').insertAdjacentHTML('beforeend', `<button class="button primary" data-open="proposal-dialog" data-lead-context="${safe(lead.id)}">Generar propuesta para este prospecto →</button>`);
     if (state.profile?.role === 'owner') $('#lead-detail').insertAdjacentHTML('beforeend', `<div class="assignment-box"><label>Responsable<select data-assign-lead="${safe(lead.id)}"><option value="">Sin asignar</option>${owners.map((owner) => `<option value="${safe(owner.id)}" ${lead.owner_id === owner.id ? 'selected' : ''}>${safe(owner.full_name || owner.email)}</option>`).join('')}</select></label></div>`);
-    if (attribution) $('#lead-detail').insertAdjacentHTML('beforeend', `<div class="attribution-box"><p class="eyebrow">ATRIBUCIÓN</p><p>${safe(attribution)}</p></div>`);
+    if (attribution.length) $('#lead-detail').insertAdjacentHTML('beforeend', `<div class="attribution-box"><p class="eyebrow">ATRIBUCIÓN DEL LEAD</p><div class="attribution-grid">${attribution.map(([label, value]) => `<div><small>${safe(label)}</small><b>${safe(value)}</b></div>`).join('')}</div></div>`);
     $('#lead-drawer').classList.add('open');
     $('#lead-drawer').setAttribute('aria-hidden', 'false');
     $('#scrim').classList.add('open');
@@ -518,9 +564,23 @@
       await mutate('invite_user', values);
     } else if (submit === 'save-form') {
       const optional = $$('[name="field_names"]:checked', form).map((input) => ({ ...FORM_FIELDS[input.value] }));
-      const payload = { ...values, active: form.elements.active.checked, fields: [{ name: 'contact_name', label: 'Nombre', type: 'text', required: true }, { name: 'email', label: 'Correo', type: 'email', required: true }, ...optional] };
+      const payload = { ...values, active: form.elements.active.checked, fields: [{ name: 'contact_name', label: 'Nombre', type: 'text', required: true, autocomplete: 'name' }, { name: 'email', label: 'Correo', type: 'email', required: true, autocomplete: 'email' }, ...optional] };
       delete payload.field_names;
-      await mutate('save_form', payload);
+      await mutate('save_form', payload, () => {
+        const existing = state.forms.find((item) => item.id === payload.form_id);
+        const record = {
+          ...(existing || {}),
+          ...payload,
+          id: existing?.id || id(),
+          slug: payload.slug || formSlug(payload.name),
+          allowed_domains: String(payload.allowed_domains || '').split(/[\n,]+/).map((item) => item.trim()).filter(Boolean),
+          privacy_url: payload.privacy_url || null,
+          default_owner_id: payload.default_owner_id || null,
+          created_at: existing?.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        if (existing) Object.assign(existing, record); else state.forms.unshift(record);
+      });
     } else if (submit === 'save-assignment') {
       await mutate('save_assignment_rule', { ...values, active: form.elements.active.checked, priority: Number(values.priority) });
     }
@@ -533,8 +593,13 @@
     document.addEventListener('click', async (event) => {
       const viewButton = event.target.closest('[data-view], [data-view-target]');
       if (viewButton) return switchView(viewButton.dataset.view || viewButton.dataset.viewTarget);
+      const editFormButton = event.target.closest('[data-edit-form]');
+      if (editFormButton) return openFormDialog(formById(editFormButton.dataset.editForm));
+      const copyFormButton = event.target.closest('[data-copy-form]');
+      if (copyFormButton) return copyFormEmbed(copyFormButton.dataset.copyForm);
       const openButton = event.target.closest('[data-open]');
       if (openButton) {
+        if (openButton.dataset.open === 'form-dialog') return openFormDialog();
         prepareDialog(openButton);
         return $(`#${openButton.dataset.open}`).showModal();
       }
@@ -628,6 +693,44 @@
     form.elements.deposit_percent.value = 50;
     form.elements.payment_url.value = proposal.payment_url || '';
     form.elements.calendar_url.value = proposal.calendar_url || '';
+  }
+
+  function openFormDialog(record = null) {
+    const dialog = $('#form-dialog');
+    const form = $('form', dialog);
+    form.reset();
+    $('h2', dialog).textContent = record ? 'Editar formulario' : 'Nuevo formulario';
+    $('button[value="default"]', form).textContent = record ? 'Guardar cambios' : 'Guardar formulario';
+    form.elements.form_id.value = record?.id || '';
+    form.elements.name.value = record?.name || '';
+    form.elements.slug.value = record?.slug || '';
+    form.elements.slug.readOnly = Boolean(record);
+    form.elements.campaign.value = record?.campaign || '';
+    form.elements.service.value = record?.service || '';
+    form.elements.allowed_domains.value = (record?.allowed_domains || ['verygoodgraphics.mx']).join('\n');
+    form.elements.description.value = record?.description || '';
+    const selectedFields = new Set((record?.fields || []).map((field) => field.name));
+    $$('[name="field_names"]', form).forEach((input) => {
+      input.checked = record ? selectedFields.has(input.value) : ['phone', 'company', 'service', 'budget_range', 'message'].includes(input.value);
+    });
+    form.elements.submit_label.value = record?.submit_label || 'Enviar solicitud';
+    form.elements.success_message.value = record?.success_message || 'Gracias. Recibimos tu solicitud.';
+    form.elements.privacy_url.value = record?.privacy_url || '';
+    form.elements.default_owner_id.value = record?.default_owner_id || '';
+    form.elements.active.checked = record ? Boolean(record.active) : false;
+    dialog.showModal();
+  }
+
+  async function copyFormEmbed(formId) {
+    const form = formById(formId);
+    if (!form) return notify('No encontramos ese formulario.');
+    const snippet = formSnippet(form.slug);
+    try {
+      await navigator.clipboard.writeText(snippet);
+      notify(`Código de ${form.name} copiado.`);
+    } catch (_) {
+      window.prompt('Copia el código del formulario:', snippet);
+    }
   }
 
   async function copyPrivateLink(url) {

@@ -10,6 +10,17 @@
     'Ilustración': 'Ilustración'
   };
 
+  var FORM_KEYS = {
+    '/': 'vgg-contacto-general',
+    '/index.html': 'vgg-contacto-general',
+    '/servicios/video.html': 'vgg-video-general',
+    '/servicios/video-producto.html': 'vgg-video-producto',
+    '/servicios/video-restaurantes.html': 'vgg-video-restaurantes',
+    '/servicios/video-eventos.html': 'vgg-video-eventos',
+    '/servicios/fotografia.html': 'vgg-fotografia',
+    '/servicios/dron.html': 'vgg-dron'
+  };
+
   function stableId(store, key) {
     try {
       var current = store.getItem(key);
@@ -66,7 +77,11 @@
     var response = await fetch('/api/vgg-crm/intake', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: crmFields(form, data), tracking: tracking() })
+      body: JSON.stringify({
+        form_key: form.dataset.vggFormKey || FORM_KEYS[location.pathname] || '',
+        fields: crmFields(form, data),
+        tracking: tracking()
+      })
     });
     var body = await response.json().catch(function () { return {}; });
     if (!response.ok) throw new Error(body.error || 'CRM no disponible');

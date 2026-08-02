@@ -12,6 +12,8 @@ const TASK_STATUSES = ['pending', 'done', 'cancelled'];
 const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 const ROLES = ['owner', 'sales', 'production'];
 const TEAMS = ['direction', 'commercial', 'production', 'viewer'];
+const FORM_FIELD_TYPES = ['text', 'email', 'tel', 'textarea', 'select', 'checkbox'];
+const FORM_FIELD_NAMES = ['contact_name', 'email', 'phone', 'company', 'service', 'budget_range', 'message', 'consent'];
 
 function cleanUrl(value) {
   const result = cleanText(value, 1000);
@@ -300,6 +302,47 @@ function cleanSlug(value) {
   return slug;
 }
 
+function cleanDomains(value) {
+  const entries = Array.isArray(value) ? value : String(value || '').split(/[\n,]+/);
+  return [...new Set(entries.map((item) => cleanText(item, 180)
+    .replace(/^https?:\/\//i, '').replace(/\/.*$/, '').replace(/^www\./, '').toLowerCase())
+    .filter((item) => /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(item)))];
+}
+
+function cleanFormFields(value) {
+  const source = Array.isArray(value) ? value : [];
+  const names = new Set();
+  const fields = source.map((field) => {
+    const name = cleanText(field?.name, 80);
+    const type = cleanText(field?.type, 30);
+    if (!FORM_FIELD_NAMES.includes(name) || !FORM_FIELD_TYPES.includes(type) || names.has(name)) return null;
+    names.add(name);
+    const result = {
+      name,
+      label: cleanText(field.label, 160) || name,
+      type,
+      required: Boolean(field.required),
+    };
+    const placeholder = cleanText(field.placeholder, 160);
+    const autocomplete = cleanText(field.autocomplete, 80);
+    if (placeholder) result.placeholder = placeholder;
+    if (autocomplete) result.autocomplete = autocomplete;
+    if (type === 'select') {
+      result.options = (Array.isArray(field.options) ? field.options : []).map((option) => cleanText(option, 160)).filter(Boolean).slice(0, 40);
+      if (!result.options.length) return null;
+    }
+    return result;
+  }).filter(Boolean);
+  for (const requiredName of ['contact_name', 'email']) {
+    const field = fields.find((item) => item.name === requiredName);
+    if (!field) {
+      const error = new Error('Nombre y correo deben estar incluidos.'); error.statusCode = 400; throw error;
+    }
+    field.required = true;
+  }
+  return fields;
+}
+
 async function inviteUser(payload, profile) {
   const email = cleanEmail(requireValue(payload.email, 'El correo', 254));
   const role = assertChoice(payload.role || 'sales', ROLES, 'El rol');
@@ -332,16 +375,23 @@ async function assignLead(payload, profile) {
 }
 
 async function saveForm(payload, profile) {
-  const fields = Array.isArray(payload.fields) ? payload.fields : [];
+  const fields = cleanFormFields(payload.fields);
   if (!fields.length) { const error = new Error('Agrega al menos un campo.'); error.statusCode = 400; throw error; }
+  const active = cleanBoolean(payload.active);
+  const allowedDomains = cleanDomains(payload.allowed_domains);
+  if (active && !allowedDomains.length) { const error = new Error('Agrega al menos un dominio antes de activar.'); error.statusCode = 400; throw error; }
+  const privacyUrl = cleanUrl(payload.privacy_url);
+  if (fields.some((field) => field.name === 'consent') && !privacyUrl) {
+    const error = new Error('El consentimiento requiere una liga HTTPS al aviso de privacidad.'); error.statusCode = 400; throw error;
+  }
   const row = {
     slug: cleanSlug(payload.slug || payload.name), name: requireValue(payload.name, 'El nombre', 160),
     description: cleanText(payload.description, 500) || null, campaign: cleanText(payload.campaign, 180) || null,
-    service: cleanText(payload.service, 120) || null, active: cleanBoolean(payload.active),
-    allowed_domains: String(payload.allowed_domains || '').split(/[\n,]+/).map((v) => cleanText(v, 180).replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase()).filter(Boolean),
+    service: cleanText(payload.service, 120) || null, active,
+    allowed_domains: allowedDomains,
     fields, submit_label: cleanText(payload.submit_label, 80) || 'Enviar solicitud',
     success_message: cleanText(payload.success_message, 300) || 'Gracias. Recibimos tu solicitud.',
-    privacy_url: cleanText(payload.privacy_url, 500) || null,
+    privacy_url: privacyUrl,
     default_owner_id: payload.default_owner_id ? cleanId(payload.default_owner_id) : null,
   };
   const record = payload.form_id ? await mustUpdate('crm_forms', cleanId(payload.form_id), row) : (await insert('crm_forms', { ...row, created_by: profile.id }))[0];

@@ -15,3 +15,7 @@
 - Se conectaron los formularios públicos al intake del CRM con atribución de landing/UTM y fallback a Netlify Forms.
 - Se optimizaron logo y artes principales a WebP, reduciendo cada asset de portada a aproximadamente 30–151 KB.
 - Se añadieron validaciones automáticas de rutas, JSON-LD, contenido, canonicals, formularios y regresiones del CRM.
+- Se portó a VGG el flujo operativo del generador de formularios: creación, edición, activación controlada y copia del código embebible.
+- Se añadió una lectura clara de atribución por formulario, landing, fuente/medio, campaña, contenido, término, referente y click ID.
+- Se preparó el registro idempotente de siete formularios VGG para contacto, video, producto, restaurantes, eventos, fotografía y dron.
+- Se reforzaron los formularios públicos con campos permitidos, dominios normalizados, privacidad HTTPS, honeypot y límite de frecuencia por visitante.
