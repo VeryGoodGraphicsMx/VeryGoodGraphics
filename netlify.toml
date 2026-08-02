@@ -3,6 +3,11 @@
   functions = "netlify/functions"
 
 [[redirects]]
+  from = "/favicon.ico"
+  to = "/media/logo.webp"
+  status = 200
+
+[[redirects]]
   from = "/crm/gracias.html"
   to = "/gracias.html"
   status = 200
