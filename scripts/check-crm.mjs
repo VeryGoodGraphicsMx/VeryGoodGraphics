@@ -26,6 +26,8 @@ const privateFlowMigration = await readFile(resolve(root, 'supabase/migrations/2
 const proposalPage = await readFile(resolve(root, 'propuesta.html'), 'utf8');
 const kickoffPage = await readFile(resolve(root, 'kickoff.html'), 'utf8');
 const actionSource = await readFile(resolve(root, 'netlify/functions/vgg-crm-action.js'), 'utf8');
+const siteHome = await readFile(resolve(root, 'index.html'), 'utf8');
+const netlifyConfig = await readFile(resolve(root, 'netlify.toml'), 'utf8');
 
 assert.match(html, /@supabase\/supabase-js@2\.111\.0/);
 assert.match(html, /<meta name="robots" content="noindex,nofollow,noarchive">/);
@@ -42,6 +44,9 @@ assert.match(app, /vgg_crm_force_reauthentication/);
 assert.match(app, /localStorage\.removeItem\(FORCE_REAUTH_KEY\)/);
 assert.match(app, /function showApp\(\) \{[\s\S]*if \(recoveryMode\)/);
 assert.doesNotMatch(app, /toast\('Contraseña actualizada correctamente\.'\)/);
+assert.match(siteHome, /<form name="prospectos-vgg"[^>]*action="\/gracias\.html"/);
+assert.doesNotMatch(siteHome, /<form name="prospectos-vgg"[^>]*action="gracias\.html"/);
+assert.match(netlifyConfig, /from = "\/crm\/gracias\.html"[\s\S]*to = "\/gracias\.html"[\s\S]*status = 200/);
 assert.doesNotMatch(`${html}\n${app}`, /VGG_SUPABASE_SECRET_KEY\s*[=:]\s*["'][^"']+/);
 assert.match(schema, /alter table public\.crm_leads enable row level security;/);
 assert.match(schema, /revoke all on table[\s\S]*from anon, authenticated, service_role;/);
