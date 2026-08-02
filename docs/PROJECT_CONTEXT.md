@@ -13,9 +13,9 @@ Convertir el sitio de Very Good Graphics en un sistema comercial que reciba, cla
 
 ## Estado al 1 de agosto de 2026
 
-- Interfaz CRM: construida con modo demo local.
-- Funciones Netlify: construidas con permisos por rol.
-- Esquema Supabase: preparado, todavía no aplicado.
-- Formulario público: endpoint preparado, desactivado por defecto.
+- Interfaz CRM: publicada con autenticación, recuperación segura y permisos por rol.
+- Supabase: proyecto `VGG CRM` activo en la organización exclusiva `ztbbjsrelrzmshesdiho`; 14 tablas CRM y tres migraciones aplicadas.
+- Usuarios: un perfil `owner` activo; no hay usuarios, datos ni secretos de AMITAI.
+- Captación: endpoint Netlify preparado para recibir servicio, subtipo, landing, URL, referente y UTM; Netlify Forms se mantiene como fallback.
+- SEO comercial: home con prioridad audiovisual y landings para producto, restaurantes, eventos, fotografía y dron.
 - Automatizaciones de correo: estructura preparada, proveedor pendiente.
-- Producción: sin modificar mientras se valida esta rama.

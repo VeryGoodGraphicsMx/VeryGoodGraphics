@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Agencia de branding, diseño web y contenido en México | Very Good Graphics</title>
-  <meta name="description" content="Very Good Graphics ayuda a empresas a vender mejor con branding, diseño web, contenido, fotografía y video. Cuéntanos tu proyecto y recibe una ruta recomendada." />
+  <title>Agencia creativa y producción audiovisual en México | VGG</title>
+  <meta name="description" content="Branding, diseño web, fotografía y producción de video para productos, restaurantes, eventos y marcas. Cuéntanos tu objetivo y recibe una ruta recomendada." />
   <meta name="robots" content="index,follow,max-image-preview:large" />
-  <link rel="canonical" href="https://verygoodgraphics.mx/" />
+  <link rel="canonical" href="https://www.verygoodgraphics.mx/" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Very Good Graphics | Diseño que comunica, estrategia que vende" />
   <meta property="og:description" content="Branding, sitios web y contenido visual para convertir ideas en marcas que generan negocio." />
-  <meta property="og:url" content="https://verygoodgraphics.mx/" />
-  <meta property="og:image" content="https://verygoodgraphics.mx/media/work-1.png" />
+  <meta property="og:url" content="https://www.verygoodgraphics.mx/" />
+  <meta property="og:image" content="https://www.verygoodgraphics.mx/media/work-1.webp" />
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"ProfessionalService","name":"Very Good Graphics","url":"https://verygoodgraphics.mx/","email":"verygoodgraphicsmx@gmail.com","telephone":"+52 55 6532 4627","areaServed":"México","serviceType":["Branding","Diseño gráfico","Diseño web","Fotografía","Producción de video","Marketing digital"]}
+  {"@context":"https://schema.org","@type":"ProfessionalService","@id":"https://www.verygoodgraphics.mx/#business","name":"Very Good Graphics","url":"https://www.verygoodgraphics.mx/","email":"verygoodgraphicsmx@gmail.com","telephone":"+52 55 6532 4627","areaServed":"México","serviceType":["Branding","Diseño gráfico","Diseño web","Fotografía de producto","Producción de video","Video para restaurantes","Video para eventos","Fotografía y video con dron"]}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -391,6 +391,37 @@
       flex: 1;
     }
 
+    /* ── PRODUCCIÓN AUDIOVISUAL DESTACADA ── */
+    .av-feature {
+      display: grid;
+      grid-template-columns: .82fr 1.18fr;
+      min-height: 560px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(18,22,32,.94), rgba(46,15,105,.72));
+      box-shadow: 0 36px 100px rgba(0,0,0,.36);
+    }
+    .av-copy { padding: clamp(38px, 5vw, 68px); display: flex; flex-direction: column; justify-content: center; }
+    .av-copy h2 { margin: 18px 0 20px; }
+    .av-copy > p { color: #b8bbca; font-size: 16px; line-height: 1.75; }
+    .av-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+    .av-link {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 48px;
+      padding: 0 18px; border-radius: 9px; text-decoration: none;
+      font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800;
+      color: var(--white); border: 1px solid rgba(255,255,255,.18); transition: transform .2s, border-color .2s;
+    }
+    .av-link:first-child { color: var(--black); background: var(--lime); border-color: var(--lime); }
+    .av-link:hover { transform: translateY(-2px); border-color: var(--lime); }
+    .av-media { position: relative; min-height: 560px; overflow: hidden; }
+    .av-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(22,13,45,.84), transparent 38%), linear-gradient(0deg, rgba(8,10,16,.5), transparent 46%); }
+    .av-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .av-verticals { position: absolute; z-index: 2; left: 28px; right: 28px; bottom: 28px; display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .av-verticals a { padding: 16px; border-radius: 13px; background: rgba(8,10,16,.78); border: 1px solid rgba(255,255,255,.15); backdrop-filter: blur(16px); color: var(--white); text-decoration: none; }
+    .av-verticals b { display: block; color: var(--lime); font-family: 'Montserrat',sans-serif; font-size: 12px; text-transform: uppercase; }
+    .av-verticals span { display: block; margin-top: 4px; color: #c0c2cc; font-size: 11px; line-height: 1.35; }
+
     /* ── TRABAJOS ── */
     .works-head {
       display: flex;
@@ -560,6 +591,9 @@
       transition: opacity .2s, transform .15s;
     }
     .btn-submit:hover { opacity: .9; transform: translateY(-2px); }
+    .btn-submit:disabled { opacity: .62; cursor: wait; transform: none; }
+    .form-status { min-height: 20px; margin-top: 10px; color: #d8d9e0; font-size: 12px; line-height: 1.5; }
+    .form-status[data-state="error"] { color: #ffb5bf; }
 
     /* ── CTA BANNER ── */
     .cta-wrap { margin-top: 80px; }
@@ -797,6 +831,8 @@
       .section-head { grid-template-columns: 1fr; gap: 14px; }
       .services-grid { grid-template-columns: repeat(2, 1fr); }
       .services-row2 { grid-template-columns: repeat(2, 1fr); }
+      .av-feature { grid-template-columns: 1fr; }
+      .av-media { min-height: 500px; }
       .works-grid { grid-template-columns: repeat(2, 1fr); }
       .proc-contact { grid-template-columns: 1fr; }
       .cta-banner { grid-template-columns: 1fr; text-align: center; gap: 20px; padding: 32px; }
@@ -822,6 +858,8 @@
       .hero-orbit::after { inset: 33px; }
       .services-grid { grid-template-columns: 1fr; }
       .services-row2 { grid-template-columns: 1fr; }
+      .av-media { min-height: 470px; }
+      .av-verticals { grid-template-columns: 1fr; }
       .works-grid { grid-template-columns: 1fr; }
       .footer-grid { grid-template-columns: 1fr; }
       .btn-cta-sm { display: none; }
@@ -837,11 +875,12 @@
   <header>
     <div class="wrap nav-inner">
       <a href="#" class="logo">
-        <img src="media/logo.png" alt="Very Good Graphics" style="height:44px;width:auto;display:block;">
+        <img src="media/logo.webp" alt="Very Good Graphics" style="height:44px;width:auto;display:block;">
       </a>
 
       <nav id="site-nav">
         <a href="#servicios">Servicios</a>
+        <a href="#produccion-audiovisual">Audiovisual</a>
         <a href="#trabajos">Trabajos</a>
         <a href="#proceso">Proceso</a>
         <a href="blog.html">Blog</a>
@@ -884,25 +923,51 @@
           </h1>
           <p class="hero-desc fu d3">
             Somos un estudio creativo aliado en la construcción de marcas con presencia,
-            claridad y alto impacto. Branding, diseño, contenido visual y soluciones digitales.
+            claridad y alto impacto. Branding, diseño y producción audiovisual para productos,
+            restaurantes, eventos y experiencias.
           </p>
           <div class="btn-group fu d4">
             <a href="#contacto" class="btn-primary">Cotiza tu proyecto →</a>
-            <a href="#trabajos" class="btn-ghost">Ver trabajos</a>
+            <a href="#produccion-audiovisual" class="btn-ghost">Ver producción audiovisual</a>
           </div>
         </div>
 
         <div class="hero-right" aria-label="Estrategia, diseño y producción de Very Good Graphics">
           <div class="hero-panel">
-            <img src="media/work-1.png" class="hero-photo" alt="Mesa de estrategia creativa de Very Good Graphics">
+            <img src="media/work-1.webp" class="hero-photo" width="1400" height="1400" alt="Mesa de estrategia creativa de Very Good Graphics" fetchpriority="high">
             <div class="hero-panel-content">
-              <div class="hero-brand"><img src="media/logo.png" alt="Very Good Graphics"></div>
+              <div class="hero-brand"><img src="media/logo.webp" alt="Very Good Graphics"></div>
               <h3>Ideas con propósito.<br><span>Diseño con impacto.</span></h3>
               <div class="hero-pills"><span>Estrategia</span><span>Identidad</span><span>Contenido</span><span>Digital</span></div>
             </div>
           </div>
           <div class="hero-orbit" aria-hidden="true"></div>
           <div class="hero-signal"><b>De la idea al resultado</b>Un solo estudio, todo el sistema.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCCIÓN AUDIOVISUAL PRIORITARIA -->
+    <section id="produccion-audiovisual">
+      <div class="wrap">
+        <div class="av-feature">
+          <div class="av-copy">
+            <span class="eyebrow">Producción audiovisual</span>
+            <h2>Contenido que se ve bien y <span class="lime">trabaja mejor.</span></h2>
+            <p>Diseñamos fotografía, video y dron alrededor de un objetivo comercial. Una producción puede convertirse en la pieza principal, el catálogo y los formatos que alimentan pauta, redes y venta.</p>
+            <div class="av-actions">
+              <a class="av-link" href="servicios/video.html">Conocer producción de video →</a>
+              <a class="av-link" href="#contacto">Cotizar una idea</a>
+            </div>
+          </div>
+          <div class="av-media">
+            <img src="media/audiovisual-eventos.webp" width="1536" height="1024" loading="lazy" alt="Producción audiovisual profesional para un evento de marca">
+            <div class="av-verticals">
+              <a href="servicios/video-producto.html"><b>Producto</b><span>Catálogo, lanzamiento y pauta</span></a>
+              <a href="servicios/video-restaurantes.html"><b>Restaurantes</b><span>Platillos, ambiente y recurrencia</span></a>
+              <a href="servicios/video-eventos.html"><b>Eventos</b><span>Cobertura, recap y piezas rápidas</span></a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -949,12 +1014,12 @@
             <p>Sitios web y landing pages modernos, enfocados en conversión y experiencia de usuario.</p>
           </a>
 
-          <a class="svc-card" href="servicios/fotografia.html" aria-label="Conocer el servicio de Fotografía Profesional">
+          <a class="svc-card" href="servicios/video-producto.html" aria-label="Conocer el servicio de fotografía y video de producto">
             <div class="svc-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
-            <h3>Fotografía Profesional</h3>
-            <p>Fotografía de producto, corporativa y lifestyle que proyecta calidad y confianza.</p>
+            <h3>Foto & Video de Producto</h3>
+            <p>Catálogo, campañas, reels y piezas comerciales planeadas en un mismo sistema visual.</p>
           </a>
 
         </div>
@@ -966,8 +1031,8 @@
             <div class="svc-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
             </div>
-            <h3>Video & Edición</h3>
-            <p>Videos que cuentan tu historia, resaltan tu producto y conectan con tu audiencia.</p>
+            <h3>Producción de Video</h3>
+            <p>Concepto, filmación, edición y adaptaciones para producto, restaurantes, eventos y marcas.</p>
           </a>
 
           <a class="svc-card" href="servicios/dron.html" aria-label="Conocer el servicio de fotografía y video con dron">
@@ -975,7 +1040,7 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             </div>
             <h3>Dron</h3>
-            <p>Tomas aéreas, recorridos y perspectivas únicas que potencian tus proyectos.</p>
+            <p>Tomas aéreas integradas a producciones para espacios, restaurantes, eventos e instalaciones.</p>
           </a>
 
           <a class="svc-card" href="servicios/ilustracion.html" aria-label="Conocer el servicio de Ilustración">
@@ -1003,33 +1068,32 @@
         </div>
 
         <div class="works-grid">
-          <!-- 5 placeholders; swap src for real images -->
           <div class="work-item">
-            <img src="media/work-1.png" alt="Proyecto 1" onerror="this.style.display='none'">
+            <img src="media/work-1.webp" width="1400" height="1400" loading="lazy" alt="Estrategia creativa y planeación de campañas de VGG">
             <div class="work-dot">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E8FF00" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>
             </div>
           </div>
           <div class="work-item">
-            <img src="media/work-2.png" alt="Proyecto 2" onerror="this.style.display='none'">
+            <img src="media/work-2.webp" width="1400" height="1400" loading="lazy" alt="Sistema de branding e identidad visual de VGG">
             <div class="work-dot">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7B2CFF" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
             </div>
           </div>
           <div class="work-item">
-            <img src="media/work-3.png" alt="Proyecto 3" onerror="this.style.display='none'">
+            <img src="media/work-3.webp" width="1400" height="1400" loading="lazy" alt="Diseño gráfico y dirección visual de VGG">
             <div class="work-dot">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E8FF00" stroke-width="1.5"><polygon points="12 2 22 22 2 22"/></svg>
             </div>
           </div>
           <div class="work-item">
-            <img src="media/work-4.png" alt="Proyecto 4" onerror="this.style.display='none'">
+            <img src="media/work-4.webp" width="1400" height="1400" loading="lazy" alt="Producción profesional de video de VGG">
             <div class="work-dot">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7B2CFF" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>
             </div>
           </div>
           <div class="work-item">
-            <img src="media/work-5.png" alt="Proyecto 5" onerror="this.style.display='none'">
+            <img src="media/work-5.webp" width="1400" height="1400" loading="lazy" alt="Fotografía y video con dron de VGG">
             <div class="work-dot">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E8FF00" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
@@ -1084,8 +1148,9 @@
           <div class="form-title">Cotiza tu proyecto</div>
           <div class="form-sub">Cuéntanos de tu proyecto y recibe una propuesta personalizada en menos de 24h.</div>
 
-          <form name="prospectos-vgg" method="POST" action="/gracias.html" data-netlify="true" netlify-honeypot="bot-field">
+          <form name="prospectos-vgg" method="POST" action="/gracias.html" data-netlify="true" netlify-honeypot="bot-field" data-vgg-lead-form>
             <input type="hidden" name="form-name" value="prospectos-vgg" />
+            <input type="hidden" name="source" value="Sitio web" />
             <p hidden><label>No llenar: <input name="bot-field" /></label></p>
             <div class="form-group">
               <label>Tipo de proyecto</label>
@@ -1094,8 +1159,11 @@
                   <option value="">Selecciona</option>
                   <option>Branding</option>
                   <option>Landing Page</option>
+                  <option>Video de producto</option>
+                  <option>Contenido para restaurante</option>
+                  <option>Video para evento</option>
                   <option>Fotografía</option>
-                  <option>Video</option>
+                  <option>Video corporativo</option>
                   <option>Dron</option>
                   <option>Ilustración</option>
                 </select>
@@ -1161,6 +1229,7 @@
             </div>
 
             <button type="submit" class="btn-submit">Solicitar cotización →</button>
+            <p class="form-status" data-form-status role="status"></p>
           </form>
         </div>
 
@@ -1171,7 +1240,7 @@
         <div class="cta-banner">
 
           <div class="cta-logo-box">
-            <img src="media/logo.png" alt="Very Good Graphics" style="width:80px;height:80px;object-fit:contain;border-radius:16px;">
+            <img src="media/logo.webp" alt="Very Good Graphics" style="width:80px;height:80px;object-fit:contain;border-radius:16px;">
           </div>
 
           <div class="cta-text">
@@ -1196,7 +1265,7 @@
 
       <div>
         <div class="footer-brand">
-          <img src="media/logo.png" alt="Very Good Graphics" style="height:36px;width:auto;display:block;">
+          <img src="media/logo.webp" alt="Very Good Graphics" style="height:36px;width:auto;display:block;">
         </div>
         <p class="footer-about">
           Diseño que comunica, estrategia que vende y creatividad que genera resultados.
@@ -1228,8 +1297,10 @@
         <a href="servicios/branding.html">Branding</a>
         <a href="servicios/diseno-grafico.html">Diseño Gráfico</a>
         <a href="servicios/diseno-web.html">Diseño Web</a>
-        <a href="servicios/fotografia.html">Fotografía</a>
-        <a href="servicios/video.html">Video & Edición</a>
+        <a href="servicios/video-producto.html">Foto y video de producto</a>
+        <a href="servicios/video-restaurantes.html">Contenido para restaurantes</a>
+        <a href="servicios/video-eventos.html">Video para eventos</a>
+        <a href="servicios/video.html">Producción de video</a>
         <a href="servicios/dron.html">Dron</a>
         <a href="servicios/ilustracion.html">Ilustración</a>
       </div>
@@ -1274,5 +1345,6 @@
       }));
     }
   </script>
+  <script src="media/lead-form.js" defer></script>
 </body>
 </html>

@@ -3,4 +3,4 @@ Allow: /
 Disallow: /cotizador.html
 Disallow: /CotizacionJosue.html
 Disallow: /KICKOFF-Eval360.html
-Sitemap: https://verygoodgraphics.mx/sitemap.xml
+Sitemap: https://www.verygoodgraphics.mx/sitemap.xml

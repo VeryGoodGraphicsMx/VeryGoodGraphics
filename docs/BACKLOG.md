@@ -7,11 +7,11 @@
 - [x] Roles y autorización desde servidor.
 - [x] Esquema inicial de base de datos con RLS.
 - [x] Endpoint protegido de ingreso desde formularios.
-- [ ] Crear organización/proyecto Supabase exclusivo de VGG.
-- [ ] Aplicar `supabase/schema.sql` y crear el primer usuario `owner`.
-- [ ] Configurar variables VGG en Netlify y probar login real.
-- [ ] Validar un envío completo y activar `VGG_CRM_FORM_ENABLED=true`.
-- [ ] Conectar los formularios del sitio conservando Netlify Forms como respaldo durante la transición.
+- [x] Crear organización/proyecto Supabase exclusivo de VGG.
+- [x] Aplicar el esquema y crear el primer usuario `owner`.
+- [x] Configurar variables VGG en Netlify y probar login real.
+- [ ] Validar un envío completo desde producción y confirmar `VGG_CRM_FORM_ENABLED=true`.
+- [x] Conectar los formularios del sitio conservando Netlify Forms como respaldo durante la transición.
 
 ## Segunda fase
 
@@ -22,9 +22,13 @@
 - [x] Aceptación, anticipo y kickoff asistidos.
 - [ ] Bitácora visible de automatizaciones y reintentos.
 
-## Campañas
+## SEO y campañas
 
-- [ ] Eventos y conversiones por landing/UTM.
+- [x] Landings comerciales para producto, restaurantes y eventos.
+- [x] Captura de landing, referente, subtipo y UTM en el ingreso al CRM.
+- [ ] Sustituir artes conceptuales por casos y material real conforme exista autorización para publicarlos.
+- [ ] Conectar GA4 y Search Console; definir eventos de formulario, WhatsApp y solicitud de cotización.
+- [ ] Medir margen, tasa de cierre y recurrencia por vertical durante 60–90 días.
 - [ ] Audiencias, consentimiento y reglas de retención.
 - [ ] Tablero por fuente, costo por lead, oportunidad y venta.
 - [ ] Lanzar campañas solo después de probar atribución y seguimiento de punta a punta.

@@ -38,7 +38,8 @@ function scoreLead(body) {
   if (cleanText(body.company, 180)) score += 8;
   if (cleanText(body.phone, 50)) score += 7;
   if (cleanText(body.message, 3000).length >= 80) score += 10;
-  if (['Branding', 'Diseño web', 'Video', 'Marketing'].includes(body.service)) score += 8;
+  if (['Branding', 'Diseño web', 'Fotografía', 'Video', 'Dron', 'Marketing'].includes(body.service)) score += 8;
+  if (/producto|restaurante|hospitality|evento/i.test(cleanText(body.source_detail, 240))) score += 6;
   return Math.min(100, score);
 }
 
