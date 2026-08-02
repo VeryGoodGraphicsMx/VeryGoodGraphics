@@ -1,8 +1,8 @@
 # Embudo comercial
 
-1. Una landing o artículo responde una búsqueda concreta y registra atribución.
+1. Una landing o artículo responde una búsqueda concreta y registra atribución. Las primeras verticales prioritarias son producto, restaurantes, eventos y dron.
 2. El prospecto revisa servicios, trabajos, proceso y un rango inicial.
-3. El formulario solicita servicio, presupuesto, fecha y objetivo.
+3. El formulario solicita sólo la información necesaria para recomendar alcance: servicio, subtipo, presupuesto, fecha y objetivo.
 4. El CRM crea el prospecto, calcula prioridad, conserva UTM/origen y programa el primer seguimiento.
 5. Las secuencias automáticas confirman recepción, recuerdan pendientes y detienen el seguimiento cuando hay respuesta.
 6. El sistema prepara el borrador de propuesta con alcance, precio, costo y margen.
@@ -10,6 +10,8 @@
 8. Al aceptar, el CRM prepara cliente, anticipo, kickoff y proyecto.
 
 Netlify Forms se conserva como respaldo hasta comprobar en producción que el formulario escribe correctamente en la base independiente de VGG. No se promete precio ni fecha automáticamente sin revisar materiales, entregables y capacidad.
+
+La capa pública intenta registrar el lead en el CRM y, ante una indisponibilidad del endpoint, usa Netlify Forms sin cambiar la experiencia del prospecto. La página de confirmación identifica el servicio y explica el siguiente paso.
 
 ## Intervención humana mínima
 
