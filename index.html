@@ -1235,7 +1235,7 @@
             <div class="form-group">
               <label>Tipo de proyecto</label>
               <div class="select-wrap">
-                <select name="tipo_proyecto" required>
+                <select name="project_type" required>
                   <option value="">Selecciona</option>
                   <option>Branding</option>
                   <option>Landing Page</option>
@@ -1252,13 +1252,13 @@
             <div class="form-group">
               <label>Servicio</label>
               <div class="select-wrap">
-                <select name="servicio" required>
+                <select name="service" required>
                   <option value="">Selecciona</option>
-                  <option>Branding Corporativo</option>
-                  <option>Diseño Gráfico</option>
-                  <option>Diseño Web &amp; Landing Pages</option>
-                  <option>Fotografía Profesional</option>
-                  <option>Video &amp; Edición</option>
+                  <option value="Branding">Branding Corporativo</option>
+                  <option value="Diseño gráfico">Diseño Gráfico</option>
+                  <option value="Diseño web">Diseño Web &amp; Landing Pages</option>
+                  <option value="Fotografía">Fotografía Profesional</option>
+                  <option value="Video">Video &amp; Edición</option>
                   <option>Dron</option>
                   <option>Ilustración</option>
                 </select>
@@ -1266,7 +1266,7 @@
             </div>
             <div class="form-group">
               <label>Nombre</label>
-              <input type="text" name="nombre" placeholder="Tu nombre completo" autocomplete="name" required />
+              <input type="text" name="contact_name" placeholder="Tu nombre completo" autocomplete="name" required />
             </div>
             <div class="form-group">
               <label>Correo</label>
@@ -1275,7 +1275,7 @@
             <div class="form-group">
               <label>Presupuesto estimado</label>
               <div class="select-wrap">
-                <select name="presupuesto" required>
+                <select name="budget_range" required>
                   <option value="">Selecciona un rango</option>
                   <option>$5,000–$15,000 MXN</option>
                   <option>$15,000–$35,000 MXN</option>
@@ -1288,7 +1288,7 @@
             <div class="form-group">
               <label>¿Cuándo necesitas comenzar?</label>
               <div class="select-wrap">
-                <select name="inicio" required>
+                <select name="start_window" required>
                   <option value="">Selecciona</option>
                   <option>Esta semana</option>
                   <option>En 2–4 semanas</option>
@@ -1299,7 +1299,7 @@
             </div>
             <div class="form-group">
               <label>Mensaje</label>
-              <textarea name="mensaje" placeholder="Cuéntanos qué quieres lograr, qué tienes hoy y cuál sería un buen resultado." required></textarea>
+              <textarea name="message" placeholder="Cuéntanos qué quieres lograr, qué tienes hoy y cuál sería un buen resultado." required></textarea>
             </div>
             <button type="submit" class="btn-submit">Solicitar cotización →</button>
             <p class="form-status" data-form-status role="status"></p>

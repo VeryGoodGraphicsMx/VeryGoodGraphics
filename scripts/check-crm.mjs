@@ -84,6 +84,12 @@ assert.match(leadForm, /data-vgg-embed-runtime/);
 assert.match(leadForm, /data-vgg-fallback/);
 assert.match(leadForm, /setTimeout\(function \(\) \{ restore\(entry\); \}, 8000\)/);
 assert.match(leadForm, /window\.VGGForms\.boot/);
+assert.match(leadForm, /enableFallbackSubmit/);
+assert.match(leadForm, /fetch\('\/api\/vgg-crm\/intake'/);
+assert.match(leadForm, /location\.assign\(thanksUrl\(entry\.form\)\)/);
+assert.match(siteHome, /name="contact_name"/);
+assert.match(siteHome, /name="service"/);
+assert.match(siteHome, /name="budget_range"/);
 for (const slug of ['vgg-contacto-general', 'vgg-video-general', 'vgg-video-producto', 'vgg-video-restaurantes', 'vgg-video-eventos', 'vgg-fotografia', 'vgg-dron']) {
   assert.match(leadForm, new RegExp(slug));
   assert.match(formRegistrationMigration, new RegExp(slug));
@@ -97,6 +103,7 @@ assert.ok(registeredFieldConfigs.some((fields) => fields.some((field) => field.n
 assert.match(formRegistrationMigration, /verygoodgraphics\.netlify\.app/);
 assert.match(formConfigSource, /PUBLIC_FIELD_NAMES/);
 assert.match(formConfigSource, /netlifyDeploy/);
+assert.match(formConfigSource, /headers\?\.referer/);
 assert.match(intakeSource, /recent\.length >= 5/);
 assert.match(intakeSource, /Formulario web/);
 assert.match(intakeSource, /submittedOrigin && !domainAllowed/);
@@ -150,6 +157,44 @@ result = await publicProposalFunction.handler({ httpMethod: 'GET', queryStringPa
 assert.equal(result.statusCode, 404);
 result = await publicKickoffFunction.handler({ httpMethod: 'GET', queryStringParameters: { t: 'bad' }, headers: {} });
 assert.equal(result.statusCode, 404);
+
+process.env.VGG_SUPABASE_URL = 'https://vgg-test.supabase.co';
+process.env.VGG_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_test';
+process.env.VGG_SUPABASE_SECRET_KEY = 'sb_secret_test';
+process.env.VGG_CRM_FORM_ENABLED = 'true';
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async () => ({
+  ok: true,
+  status: 200,
+  text: async () => JSON.stringify([{
+    slug: 'vgg-contacto-general',
+    name: 'Sitio VGG · Contacto general',
+    description: 'Formulario de prueba',
+    allowed_domains: ['verygoodgraphics.mx', 'www.verygoodgraphics.mx'],
+    fields: [],
+    submit_label: 'Enviar',
+    success_message: 'Gracias',
+    privacy_url: null,
+  }]),
+});
+result = await formConfigFunction.handler({
+  httpMethod: 'GET',
+  headers: { referer: 'https://www.verygoodgraphics.mx/?v=test' },
+  queryStringParameters: { key: 'vgg-contacto-general' },
+  path: '/api/vgg-form-config',
+});
+assert.equal(result.statusCode, 200);
+result = await formConfigFunction.handler({
+  httpMethod: 'GET',
+  headers: { referer: 'https://example.com/' },
+  queryStringParameters: { key: 'vgg-contacto-general' },
+  path: '/api/vgg-form-config',
+});
+assert.equal(result.statusCode, 403);
+globalThis.fetch = originalFetch;
+delete process.env.VGG_SUPABASE_URL;
+delete process.env.VGG_SUPABASE_PUBLISHABLE_KEY;
+delete process.env.VGG_SUPABASE_SECRET_KEY;
 
 delete process.env.VGG_CRM_FORM_ENABLED;
 result = await intakeFunction.handler(event('POST', {}, { origin: 'https://verygoodgraphics.mx' }));

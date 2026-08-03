@@ -2,6 +2,9 @@
 
 ## 2026-08-02
 
+- Se corrigió la validación de dominio del generador para peticiones same-origin sin encabezado `Origin`.
+- El formulario HTML de respaldo ahora envía al intake del CRM y sólo abre la página de agradecimiento después de una respuesta exitosa.
+- Se normalizaron los nombres y valores del formulario principal con el contrato de datos del CRM.
 - Se corrigió el header de la Home para usar el logo oficial de VGG en lugar de una aproximación geométrica.
 - Se unificó el fondo atmosférico negro/violeta con retícula en Home, servicios y contenido editorial.
 - Se añadieron favicon ICO/PNG y `apple-touch-icon` a todas las páginas HTML para mejorar compatibilidad con Safari y navegadores móviles.

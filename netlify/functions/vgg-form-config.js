@@ -17,6 +17,12 @@ function domainAllowed(origin, domains) {
   });
 }
 
+function requestPage(event) {
+  const origin = requestOrigin(event);
+  if (origin) return origin;
+  return String(event.headers?.referer || event.headers?.Referer || '');
+}
+
 function publicForm(form) {
   return {
     slug: form.slug,
@@ -44,7 +50,7 @@ exports.handler = async (event) => {
     const slug = cleanText(event.queryStringParameters?.key, 80);
     const [form] = await select('crm_forms', `slug=eq.${encodeURIComponent(slug)}&active=is.true&select=slug,name,description,allowed_domains,fields,submit_label,success_message,privacy_url`);
     if (!form) { const error = new Error('Formulario no disponible.'); error.statusCode = 404; throw error; }
-    if (!domainAllowed(requestOrigin(event), form.allowed_domains)) { const error = new Error('Dominio no autorizado.'); error.statusCode = 403; throw error; }
+    if (!domainAllowed(requestPage(event), form.allowed_domains)) { const error = new Error('Dominio no autorizado.'); error.statusCode = 403; throw error; }
     return response(event, 200, { form: publicForm(form) }, { 'Cache-Control': 'public,max-age=60' });
   } catch (error) { return errorResponse(event, error); }
 };
