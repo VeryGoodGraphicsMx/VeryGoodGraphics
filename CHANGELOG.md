@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-02
+
+- Se corrigió el header de la Home para usar el logo oficial de VGG en lugar de una aproximación geométrica.
+- Se unificó el fondo atmosférico negro/violeta con retícula en Home, servicios y contenido editorial.
+- Se añadieron favicon ICO/PNG y `apple-touch-icon` a todas las páginas HTML para mejorar compatibilidad con Safari y navegadores móviles.
+- Se publicó la landing `/sesion-promocional/` para negocios locales con paquete breve, ejemplos por vertical y agenda directa en Calendly para sábados y domingos.
+
 ## 2026-08-01
 
 - Se creó el portal CRM privado de VGG con diseño negro, acentos lima/morado y logo corporativo.

@@ -19,7 +19,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800;900&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 
 
-  <link rel="icon" href="/media/logo.webp" type="image/webp">
+  <meta name="theme-color" content="#08070e">
+  <link rel="icon" href="/media/favicon.ico" sizes="any">
+  <link rel="icon" href="/media/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="/media/favicon-48.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="/media/apple-touch-icon.png" sizes="180x180">
   <link rel="preload" href="/media/home-drone-reel.webm" as="video" type="video/webm">
   <style>html,body{margin:0;background:#08070e}body{overflow-x:hidden}</style>
 </head>
@@ -37,11 +41,13 @@
       overflow: hidden;
       background-color: #08070e;
       background-image:
-        radial-gradient(circle at 78% 8%, rgba(111, 28, 213, .28), transparent 26%),
-        radial-gradient(circle at 8% 46%, rgba(91, 30, 177, .18), transparent 24%),
+        radial-gradient(ellipse at 78% 7%, rgba(111, 28, 213, .4), transparent 29%),
+        radial-gradient(ellipse at 8% 38%, rgba(91, 30, 177, .24), transparent 27%),
+        radial-gradient(ellipse at 92% 62%, rgba(223, 255, 0, .055), transparent 20%),
+        linear-gradient(135deg, rgba(25, 10, 49, .5), transparent 38%),
         linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
-      background-size: auto, auto, 64px 64px, 64px 64px;
+      background-size: auto, auto, auto, auto, 64px 64px, 64px 64px;
       color: #f7f7f2;
       font-family: "Space Grotesk", Arial, sans-serif;
     }
@@ -68,7 +74,9 @@
       min-height: 72px;
       padding: 0 4vw;
       border-bottom: 1px solid rgba(255, 255, 255, .15);
-      background: #08070e;
+      background:
+        radial-gradient(ellipse at 28% -80%, rgba(111, 28, 213, .26), transparent 58%),
+        linear-gradient(90deg, #08070e 0%, #10091d 55%, #08070e 100%);
     }
 
     #vgg-instrument-study .vgg-inst-nav {
@@ -87,19 +95,16 @@
     #vgg-instrument-study .vgg-inst-wordmark {
       display: inline-flex;
       align-items: center;
-      gap: 9px;
-      font-size: .8rem;
-      font-weight: 500;
-      letter-spacing: -.04em;
-      text-align: center;
-      text-transform: uppercase;
+      width: 118px;
+      height: 66px;
     }
 
-    #vgg-instrument-study .vgg-inst-mark {
-      width: 26px;
-      height: 20px;
-      background: #dfff00;
-      clip-path: polygon(0 15%, 82% 15%, 100% 0, 94% 36%, 100% 60%, 77% 63%, 88% 100%, 0 80%);
+    #vgg-instrument-study .vgg-inst-wordmark img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
     }
 
     #vgg-instrument-study .vgg-inst-reel {
@@ -897,7 +902,12 @@
     @media (max-width: 760px) {
       #vgg-instrument-study .vgg-inst-header {
         grid-template-columns: 1fr auto;
-        min-height: 62px;
+        min-height: 76px;
+      }
+
+      #vgg-instrument-study .vgg-inst-wordmark {
+        width: 108px;
+        height: 62px;
       }
 
       #vgg-instrument-study .vgg-inst-nav:first-child {
@@ -1128,8 +1138,7 @@
       <a href="#vgg-inst-purpose">Nosotros</a>
     </nav>
     <a class="vgg-inst-wordmark" href="#vgg-inst-top" aria-label="Very Good Graphics, inicio">
-      <span class="vgg-inst-mark" aria-hidden="true"></span>
-      <span>Very Good<br>Graphics</span>
+      <img src="/media/logo.webp" alt="Very Good Graphics">
     </a>
     <nav class="vgg-inst-nav" aria-label="Navegación principal derecha">
       <a href="https://www.verygoodgraphics.mx/blog">Blog</a>
